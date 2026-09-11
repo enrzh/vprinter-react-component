@@ -106,6 +106,7 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
   const totals = isMarkup || isTicket ? null : calculateTotals(data.items, data.taxBasisPoints);
   const money = isMarkup || isTicket ? null : moneyFormatter(data.locale, data.currency);
   const taxRate = isMarkup || isTicket ? null : new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100);
+  const statusText = printing ? 'Printing your receipt' : job.phase === 'printed' ? 'Transaction complete' : 'Ready to print';
 
   function finishPrint() {
     setJob(current => current.phase === 'printing' ? { ...current, phase: 'printed' } : current);
@@ -134,19 +135,19 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
   }
 
   return <section className={`vp ${className}`} data-phase={job.phase} aria-label="Virtual receipt printer">
-    <button className="vp-print" type="button" onClick={printReceipt} disabled={printing} aria-describedby={statusId}>
+    <button className="vp-print" type="button" onClick={printReceipt} disabled={printing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
       <PrinterIcon />
-      <span>{printing ? 'Printing…' : 'Print Receipt'}</span>
+      <span className="vp-sr-only">{printing ? 'Printing receipt' : 'Print receipt'}</span>
     </button>
 
     <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true" />
       <div className="vp-status" role="status" aria-live="polite" aria-atomic="true" id={statusId}>
-        <span className={`vp-status-icon ${printing ? 'vp-status-icon--printing' : ''}`} aria-hidden="true">
+        <span className={`vp-status-icon ${printing ? 'vp-status-icon--printing' : ''}`} aria-hidden="true" title={statusText}>
           {printing ? <span className="vp-spinner" /> : job.phase === 'printed' ?
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10" /><path d="m7.5 12 3 3 6-6" /></svg> : <PrinterIcon />}
         </span>
-        <span>{printing ? 'Printing your receipt…' : job.phase === 'printed' ? 'Transaction complete' : 'Ready to print'}</span>
+        <span className="vp-sr-only">{statusText}</span>
       </div>
       <div className="vp-slot" aria-hidden="true" />
       <div className="vp-paper-window" aria-busy={printing}>
