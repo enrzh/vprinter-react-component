@@ -165,6 +165,116 @@ Bestellung-ID: ******2aad
   receipt: `<LOGO><BR><C>(0° Preview) - Enrico</C><C>This Address doesn't exist 1A<BR>41468 Nowhere</C><C>Tel.: +4915224683481</C><C>Email: enrico@allo.restaurant</C><C>St.-Nr.: 88888888</C><BR><BR><BOLD>Zwischenbon</BOLD><BR><BOLD>Bestellungsnummer: 029</BOLD><BR>Bestellung-ID: e17e<BR>Gedruckt um: 17-11-2025 21:03<BR><BOLD>Ausser Haus</BOLD><BR>Kunde: enrico etst<BR>Abholungszeit: baldmoeglichst (17-11-2025)<BR>Telefonnummer: 015224683481<BR>Zahlungsmethode: Bar<BR>------------------------------------------------<BR>4 001 # DEAL - Smashed Burger. 9.99 39.96<BR> Doppel<BR> Mineralwasser still<BR> Pommes<BR>------------------------------------------------<BR><BR><BOLD>Rechnungsbetrag</BOLD> <B>39.96€</B><BR><BR><BOLD>Zahlungsbetrag</BOLD> <B>39.96€</B><BR>================================================<BR> MWST NETTO STEUER BRUTTO<BR> 19.00% 0.00 0.00 0.00<BR> 7.00% 37.35 2.61 39.96<BR><BR><C>Vielen Dank fuer Ihren Besuch</C><BR><BR>------------------------------------------------<BR><BR>Storniert: 0.00<BR><BR><C><B>To Go</B></C><C><B>enrico etst</B></C><C><B>029</B></C>`,
   alert: `<C><B>21:00 17-11-2025</B></C><BR><BR><C><B>Neue Lieferbestellung</B></C><BR><BR><B>Kunde:</B><BR><B>TEST ALLO</B><BR><BR><B>Lieferzeit:</B><BR><B>06:00 (18-11-2025)</B><BR><BR><C>Bitte bestaetigen Sie im System!</C><BR><BR>`,
   controls: `<CB>FEIEYUN small ticket</CB><BR><C><L>Double height</L></C><BR><C><W>Double width</W></C><BR><RIGHT>Right aligned 42.99</RIGHT><BR><QR>https://example.test/order/029</QR><BR><CUT><PLUGIN>`,
+  realWorldDaily: `TAGESABRECHNUNG (Abgeschlossen)
+Kopie
+Z-Nummer: 003
+Gestartet um: 12-02-2025 12:00
+Erstellt um: 17-03-2025 18:49
+Erstellt von: allo Zhan
+Gedruckt um: 19-03-2025 13:40
+Gedruckt von: \x20\x20
+Konto: enrico@allo.restaurant
+Gedruckt: 2x
+
+----------------------------------------
+SPARTE                              BRUTTO
+----------------------------------------
+3 Sonstige .                       -40.00  -2%
+78 Sonstige                       1475.00  74%
+53 Sonstige                        495.00  25%
+30 Sonstige                         22.00   1%
+1 Rabatt                            -0.25   0%
+2 Wraps                             23.00   1%
+1 Biryani                           14.00   1%
+1 SIGN. COC.                        12.50   1%
+----------------------------------------
+Umsatz   7.00%                       0.00
+Umsatz  19.00%                    2001.25
+========================================
+Umsatz                              2001.25
+
+Bar (Trinkgeld)                       33.23
+Unbar (Trinkgeld)                      0.00
+========================================
+Trinkgeld                             33.23
+
+Bar                                  1745.68
+Karte                                 275.80
+Online                                  0.00
+Gutschein                              13.00
+========================================
+Total                                2034.48
+----------------------------------------
+Umsatz                              2001.25
+Trinkgeld                             33.23
+
+========================================
+MWST   7.00%       0.00   NETTO:      0.00
+MWST  19.00%     319.53   NETTO:   1681.72
+MWST   0.00%       0.00   NETTO:     33.23
+----------------------------------------
+Total                  319.53       1714.95
+========================================
+
+                    7.00%        19.00%
+DineIn                0.00          2453.25
+Pickup                0.00             0.00
+----------------------------------------
+Total                 0.00          2453.25
+========================================
+
+Erste Bonierung:    12:02
+Letzte Bonierung:   20:27
+----------------------------------------
+
+Heute wurde storniert:              299.90
+
+12:04 1 Bar Item 1                    1.00 (3)
+15:31 1 First Item                   10.90
+15:33 2 Second Cat item              22.00
+11:22 1 36                           36.00 (1)
+11:22 1 45                           45.00 (1)
+16:27 1 First Item                   27.00 (!!!)
+16:27 1 36                           36.00 (!!!)
+16:27 10 Second Cat item            110.00 (!!!)
+13:53 1 Veg Biryani                   12.00 (!!!)
+
+----------------------------------------
+Stornierte Bestellungen
+
+Bestellnummer
+001                                  -40.00
+001                                  -40.00
+012                                 -372.00
+----------------------------------------
+01hvdv4kjcw318fr8ftg6fvhgl           -452.00
+
+Summe                                -452.00
+----------------------------------------
+
+Kassenbuch Bargeld
+
+Kassenstand:                           0.00
+
+Anfangssaldo                       10000.00
+Edeka                                 -20.09
+
+Bargeld am Ende des Tags:          11725.59
+----------------------------------------
+
+Kundenkarten
+
+Einnahmen:                            210.00
+Bareinnahmen:                         210.00
+Vouchers:                               0.00
+Sonstige Einnahmen:                    0.00
+Ausgabe:                               13.00
+Anpassung:                              0.00
+----------------------------------------
+
+Very Suspicious Company GmbH - Enrico
+This Address doesn't exist 1A, 41468 Nowhere
+St.-Nr.:    88888888`,
   daily: `TAGESABRECHNUNG (Vorlaeufig)
 
 Konto: enrico@allo.restaurant

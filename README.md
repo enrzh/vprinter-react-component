@@ -68,6 +68,10 @@ Pass `logo` as an image URL or React node to replace the default mark used by
 `<LOGO>`. Long fixed-width report rows keep their spacing and can be scrolled
 inside the paper on narrow screens.
 
+The demo includes a `Real-world Tagesabrechnung` example transcribed from a
+completed restaurant day report, including canceled items, canceled orders,
+cash-book balances, and customer-card totals.
+
 `<B>` remains bold for compatibility with the restaurant payloads shown here;
 use `<CB>`, `<DB>`, `<L>`, or `<W>` when the source intends enlarged printer
 text. This component is a visual preview and does not send commands to a
