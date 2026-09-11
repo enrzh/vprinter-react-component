@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { VirtualPrinter } from './VirtualPrinter.jsx';
 import { printerExamples } from './printerExamples.js';
@@ -21,6 +21,12 @@ function CameraIcon() {
     <rect x="3" y="6" width="18" height="13" rx="3" />
     <circle cx="12" cy="12.5" r="3.2" />
     <path d="M8 6.2 9.3 4h5.4L16 6.2" />
+  </svg>;
+}
+
+function FullscreenIcon({ exit = false }) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+    {exit ? <path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5" /> : <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />}
   </svg>;
 }
 
@@ -98,6 +104,8 @@ function Demo() {
   const [exampleId, setExampleId] = useState('real-world-daily');
   const [markupContent, setMarkupContent] = useState(printerInputExamples.realWorldDaily);
   const [customContent, setCustomContent] = useState(customStarter);
+  const previewRef = useRef(null);
+  const [previewFullscreen, setPreviewFullscreen] = useState(false);
   const [quickDraft, setQuickDraft] = useState(() => ({
     title: quickTicketExample.title,
     subtitle: quickTicketExample.subtitle,
@@ -125,6 +133,54 @@ function Demo() {
     setExampleId(id);
     const next = printerExamples.find(example => example.id === id);
     if (next) setMarkupContent(next.input);
+  }
+
+  useEffect(() => {
+    const syncFullscreenState = () => {
+      const nativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+      setPreviewFullscreen(nativeFullscreen === previewRef.current);
+    };
+    document.addEventListener('fullscreenchange', syncFullscreenState);
+    document.addEventListener('webkitfullscreenchange', syncFullscreenState);
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFullscreenState);
+      document.removeEventListener('webkitfullscreenchange', syncFullscreenState);
+    };
+  }, []);
+
+  async function exitPreviewFullscreen() {
+    const element = previewRef.current;
+    const nativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    if (nativeFullscreen === element) {
+      try {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } catch {
+        // The browser may already have left fullscreen via its own controls.
+      }
+    }
+    setPreviewFullscreen(false);
+  }
+
+  async function togglePreviewFullscreen() {
+    const element = previewRef.current;
+    if (!element) return;
+    const nativeFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    if (nativeFullscreen === element) {
+      await exitPreviewFullscreen();
+      return;
+    }
+    if (previewFullscreen && !nativeFullscreen) {
+      await exitPreviewFullscreen();
+      return;
+    }
+    setPreviewFullscreen(true);
+    try {
+      if (element.requestFullscreen) await element.requestFullscreen({ navigationUI: 'hide' });
+      else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();
+    } catch {
+      // Keep the CSS fullscreen fallback when the host browser denies the request.
+    }
   }
 
   const printerProps = mode === 'quick' ? { ticket: quickTicket } : { content: mode === 'custom' ? customContent : markupContent };
@@ -167,10 +223,15 @@ function Demo() {
         </button>
       </section>
 
-      <section className="demo-preview" aria-label="Printer preview">
+      <section ref={previewRef} className={`demo-preview ${previewFullscreen ? 'demo-preview--fullscreen' : ''}`} aria-label="Printer preview">
         <div className="demo-preview-header">
-          <button type="button" className="demo-back" onClick={() => setStep('setup')}><ArrowIcon direction="left" /><span>Edit input</span></button>
-          <span>Printer preview</span>
+          <button type="button" className="demo-back" onClick={async () => { await exitPreviewFullscreen(); setStep('setup'); }}><ArrowIcon direction="left" /><span>Edit input</span></button>
+          <div className="demo-preview-actions">
+            <span>Printer preview</span>
+            <button type="button" className="demo-fullscreen" onClick={togglePreviewFullscreen} aria-label={previewFullscreen ? 'Exit fullscreen preview' : 'Enter fullscreen preview'} title={previewFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
+              <FullscreenIcon exit={previewFullscreen} />
+            </button>
+          </div>
         </div>
         <VirtualPrinter key={`${mode}-${cameraPosition}-${step}`} {...printerProps} cameraPosition={cameraPosition} initiallyPrinted />
       </section>
