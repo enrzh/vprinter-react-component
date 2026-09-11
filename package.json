@@ -1,0 +1,21 @@
+{
+  "name": "vprinter-react-component",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build --base=./",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test src/receipt.test.js"
+  },
+  "dependencies": {
+    "jsbarcode": "3.12.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.0"
+  }
+}
