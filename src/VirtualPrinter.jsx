@@ -95,18 +95,43 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
   const headingId = useId();
   const statusId = useId();
   const nextId = useRef(0);
+  const printButton = useRef(null);
+  const paperScroll = useRef(null);
   const [job, setJob] = useState(() => ({
     id: 0, phase: initiallyPrinted ? 'printed' : 'ready', receipt: hasContent || hasTicket ? null : receipt,
     content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null,
   }));
   const printing = job.phase === 'printing';
+  const tearing = job.phase === 'tearing';
   const data = job.receipt;
   const isMarkup = job.content !== null;
   const isTicket = !isMarkup && job.ticket !== null;
   const totals = isMarkup || isTicket ? null : calculateTotals(data.items, data.taxBasisPoints);
   const money = isMarkup || isTicket ? null : moneyFormatter(data.locale, data.currency);
   const taxRate = isMarkup || isTicket ? null : new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100);
-  const statusText = printing ? 'Printing your receipt' : job.phase === 'printed' ? 'Transaction complete' : 'Ready to print';
+  const statusText = printing ? 'Printing your receipt' : tearing ? 'Tearing off receipt' : job.phase === 'printed' ? 'Receipt printed' : 'Ready to print';
+
+  function finishTear() {
+    setJob(current => current.phase === 'tearing' ? { ...current, phase: 'ready' } : current);
+  }
+
+  useEffect(() => {
+    if (job.phase === 'ready' && job.id > 0) printButton.current?.focus({ preventScroll: true });
+  }, [job.phase, job.id]);
+
+  useEffect(() => {
+    if (paperScroll.current) paperScroll.current.scrollTop = 0;
+  }, [job.id]);
+
+  useEffect(() => {
+    if (!tearing) return;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onMotionChange = () => { if (motion.matches) finishTear(); };
+    onMotionChange();
+    motion.addEventListener('change', onMotionChange);
+    const timer = window.setTimeout(finishTear, 550);
+    return () => { window.clearTimeout(timer); motion.removeEventListener('change', onMotionChange); };
+  }, [tearing]);
 
   function finishPrint() {
     setJob(current => current.phase === 'printing' ? { ...current, phase: 'printed' } : current);
@@ -128,20 +153,23 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
   }, [job.id, printing]);
 
   function printReceipt() {
-    if (printing) return;
+    if (printing || tearing) return;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setJob({ id: ++nextId.current, phase: reduceMotion ? 'printed' : 'printing', receipt: hasContent || hasTicket ? null : receipt,
       content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null });
   }
 
   return <section className={`vp ${className}`} data-phase={job.phase} aria-label="Virtual receipt printer">
-    <button className="vp-print" type="button" onClick={printReceipt} disabled={printing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
-      <PrinterIcon />
-      <span className="vp-sr-only">{printing ? 'Printing receipt' : 'Print receipt'}</span>
-    </button>
-
     <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true" />
+      <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
+        <PrinterIcon />
+        <span className="vp-sr-only">{printing ? 'Printing receipt' : 'Print receipt'}</span>
+      </button>
+
+      {(job.phase === 'printed' || tearing) && <button className="vp-tear" type="button" aria-label="Tear off receipt" title="Tear off receipt" disabled={tearing} onClick={() => setJob(current => current.phase === 'printed' ? { ...current, phase: 'tearing' } : current)}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8 8 12 12M8 16 20 4" /></svg>
+      </button>}
       <div className="vp-status" role="status" aria-live="polite" aria-atomic="true" id={statusId}>
         <span className={`vp-status-icon ${printing ? 'vp-status-icon--printing' : ''}`} aria-hidden="true" title={statusText}>
           {printing ? <span className="vp-spinner" /> : job.phase === 'printed' ?
@@ -151,6 +179,16 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
       </div>
       <div className="vp-slot" aria-hidden="true" />
       <div className="vp-paper-window" aria-busy={printing}>
+        <div ref={paperScroll} className="vp-paper-scroll" role="region" aria-label="Receipt paper" tabIndex={job.phase === 'printed' ? 0 : undefined}
+          onKeyDown={event => {
+            if (event.target !== event.currentTarget || job.phase !== 'printed') return;
+            const paper = event.currentTarget;
+            const offsets = { ArrowDown: 40, ArrowUp: -40, PageDown: paper.clientHeight * .9, PageUp: -paper.clientHeight * .9, Home: -paper.scrollHeight, End: paper.scrollHeight };
+            if (!(event.key in offsets)) return;
+            event.preventDefault();
+            paper.scrollTop += offsets[event.key];
+          }}
+          onAnimationEnd={event => { if (event.animationName === 'vp-tear' && event.target === event.currentTarget) finishTear(); }}>
         <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : isTicket ? 'vp-paper--ticket' : ''}`} aria-labelledby={isMarkup || isTicket ? undefined : headingId} aria-label={isMarkup || isTicket ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}
           onAnimationEnd={event => { if (event.animationName === 'vp-feed' && event.target === event.currentTarget) finishPrint(); }}>
           {isMarkup ? <MarkupPaper content={job.content} logo={logo} /> : isTicket ? <TicketPaper ticket={job.ticket} /> : <>
@@ -187,6 +225,7 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
             </footer>
           </>}
         </article>
+        </div>
       </div>
     </div>
   </section>;

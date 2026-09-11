@@ -71,6 +71,11 @@ button { cursor: pointer; }
 .demo-preview-header { display: flex; align-items: center; justify-content: space-between; min-height: 28px; margin: 2px 0 20px; color: #6e6e73; font: 600 11px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
 .demo-back { display: inline-flex; align-items: center; gap: 7px; padding: 4px 0; border: 0; background: transparent; color: #0071e3; font-size: 12px; letter-spacing: 0; text-transform: none; }
 .demo-back:hover { color: #005bb5; }
+.demo-share { display: none; width: 44px; height: 44px; place-items: center; border: 1px solid #d2d2d7; border-radius: 8px; background: #fff; color: #1d1d1f; }
+.demo-preview:has(.vp[data-phase="printed"]) .demo-share { display: grid; }
+.demo-share svg { width: 20px; height: 20px; }
+.demo-share:focus-visible { outline: 2px solid #007aff; outline-offset: 3px; }
+.demo-share:disabled { opacity: .5; cursor: wait; }
 
 @media (max-width: 760px) {
   .demo { padding: 20px 14px 46px; }
