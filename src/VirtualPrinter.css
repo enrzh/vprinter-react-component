@@ -29,7 +29,7 @@
   font: 600 16px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   cursor: pointer;
   touch-action: manipulation;
-  transition: background 140ms, transform 140ms;
+  transition: color 140ms, transform 140ms;
 }
 .vp-print svg { width: 21px; height: 21px; flex: none; }
 @media (hover: hover) {
@@ -54,7 +54,8 @@
   z-index: 3;
   top: 38px;
   left: 25px;
-  right: 25px;
+  right: auto;
+  width: 22px;
   min-height: 65px;
   display: flex;
   align-items: center;
@@ -167,7 +168,7 @@
   .vp-print { min-height: 40px; margin-bottom: 20px; font-size: 15px; }
   .vp-machine { padding-top: 110px; }
   .vp-housing { height: 144px; border-radius: 28px; }
-  .vp-status { top: 30px; left: 18px; right: 18px; min-height: 57px; padding: 13px 0; gap: 11px; font-size: 15px; }
+  .vp-status { top: 30px; left: 18px; min-height: 57px; padding: 13px 0; gap: 11px; font-size: 15px; }
   .vp-slot { top: 104px; left: 20px; right: 20px; }
   .vp-paper-window { margin-inline: 24px; }
   .vp-paper { padding: 32px 18px 32px; font-size: 14px; }
