@@ -93,13 +93,12 @@ function TicketPaper({ ticket }) {
 
 /**
  * Reusable visual printer. Pass one of `receipt`, raw FEIEYUN `content`, or a
- * compact `ticket` object. `cameraPosition` controls the punch-hole treatment.
+ * compact `ticket` object.
  */
-export function VirtualPrinter({ receipt, content, ticket, logo, cameraPosition = 'center', initiallyPrinted = false, className = '' }) {
+export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinted = false, className = '' }) {
   const hasContent = content !== undefined && content !== null;
   const hasTicket = ticket !== undefined && ticket !== null;
   if (!hasContent && !hasTicket && !receipt) throw new TypeError('VirtualPrinter requires receipt, content, or ticket.');
-  const camera = ['center', 'left', 'right'].includes(cameraPosition) ? cameraPosition : 'center';
   const headingId = useId();
   const statusId = useId();
   const nextId = useRef(0);
@@ -141,14 +140,13 @@ export function VirtualPrinter({ receipt, content, ticket, logo, cameraPosition 
       content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null });
   }
 
-  return <section className={`vp vp--camera-${camera} ${className}`} data-phase={job.phase} aria-label="Virtual receipt printer">
+  return <section className={`vp ${className}`} data-phase={job.phase} aria-label="Virtual receipt printer">
     <button className="vp-print" type="button" onClick={printReceipt} disabled={printing} aria-describedby={statusId}>
       <PrinterIcon />
       <span>{printing ? 'Printing…' : 'Print Receipt'}</span>
     </button>
 
-    <div className={`vp-machine vp-machine--camera-${camera}`}>
-      <div className="vp-camera-island" aria-hidden="true"><span className="vp-camera-lens" /></div>
+    <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true" />
       <div className="vp-status" role="status" aria-live="polite" aria-atomic="true" id={statusId}>
         <span className={`vp-status-icon ${printing ? 'vp-status-icon--printing' : ''}`} aria-hidden="true">
