@@ -4,11 +4,11 @@ A reusable React + CSS receipt printer based on the Aura Artisan Café reference
 
 **[Open the demo](https://enrzh.github.io/vprinter-react-component/)**
 
-The demo opens with a completed receipt. **Print Receipt** replays the paper feed;
-the status changes while printing and the button prevents duplicate jobs.
-Reduced motion displays the completed receipt immediately, including when the
-system preference changes during a print. All receipt content is structured data;
-quantities, subtotal, tax and total are calculated in integer minor units.
+The demo starts with an input step and a printer preview step. On small screens
+these are two focused screens; on larger screens they sit side by side. Choose a
+quick ticket, edit a FEIEYUN payload, or write a custom layout, then choose where
+the printer camera sits and open the preview. **Print Receipt** replays the paper
+feed; the status changes while printing and the button prevents duplicate jobs.
 
 ## Run locally
 
@@ -28,10 +28,11 @@ payment processing, secrets, or physical printing are involved.
 
 ## Reuse the component
 
-Copy `src/VirtualPrinter.jsx`, `src/VirtualPrinter.css`, and `src/receipt.js`
-into a React app and install `jsbarcode`. The component imports its scoped CSS;
-`printerMarkup.js`, `printerExamples.js`, `demo.css` and `main.jsx` are only used
-by the standalone demo, except when you want the raw-input parser.
+Copy `src/VirtualPrinter.jsx`, `src/VirtualPrinter.css`, `src/receipt.js`, and
+`src/simpleTicket.js` into a React app and install `jsbarcode`. The component
+imports its scoped CSS; `printerMarkup.js`, `printerExamples.js`, `demo.css` and
+`main.jsx` are only used by the standalone demo, except when you want the
+raw-input parser.
 
 ```jsx
 import { VirtualPrinter } from './VirtualPrinter.jsx';
@@ -52,6 +53,23 @@ Bestellung-ID: ******2aad
 <B>1 x 63 DRAGON RIVER</B>`;
 
 <VirtualPrinter content={order} initiallyPrinted />
+```
+
+For the quick path, pass `ticket` with a title and simple rows. Items may be
+strings or objects with `name`/`label`, optional `quantity`, and optional
+`amount`:
+
+```jsx
+<VirtualPrinter ticket={{
+  title: 'Order #029',
+  subtitle: 'To Go · Enrico',
+  items: [
+    { quantity: 1, name: 'Smashed Burger', amount: '9.99' },
+    { name: 'Pommes', amount: '3.50' },
+  ],
+  total: '13.49 EUR',
+  footer: 'Vielen Dank fuer Ihren Besuch',
+}} initiallyPrinted />
 ```
 
 Supported FEIEYUN small-ticket commands are `<B>` and `<BOLD>` for bold text,
@@ -79,15 +97,17 @@ physical printer, open a cash drawer, play audio, or produce a scannable QR code
 
 | Prop | Default | Purpose |
 | --- | --- | --- |
-| `receipt` | Required when `content` is absent | Structured receipt, following `cafeReceipt` |
-| `content` | Required when `receipt` is absent | Raw printer markup/plain text |
+| `receipt` | One of `receipt`/`content`/`ticket` | Structured receipt, following `cafeReceipt` |
+| `content` | One of `receipt`/`content`/`ticket` | Raw printer markup/plain text |
+| `ticket` | One of `receipt`/`content`/`ticket` | Compact title/items/total/footer ticket |
 | `logo` | Default mark | Image URL or React node for `<LOGO>` |
+| `cameraPosition` | `center` | `center`, `left`, or `right` camera treatment |
 | `initiallyPrinted` | `false` | Show a completed receipt on mount |
 | `className` | `''` | Optional host styling hook |
 
 Multiple instances are independent. Treat receipt data as immutable. Updated
 props are captured on the next print, leaving an existing receipt intact. Use
-exactly one of `receipt` or `content` per instance.
+exactly one of `receipt`, `content`, or `ticket` per instance.
 
 `cafeReceipt` documents the complete data shape. Item IDs must be unique;
 quantities are positive integers, amounts are nonnegative integers in the

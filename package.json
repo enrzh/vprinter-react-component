@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.js",
     "./styles.css": "./src/VirtualPrinter.css",
-    "./markup": "./src/printerMarkup.js"
+    "./markup": "./src/printerMarkup.js",
+    "./ticket": "./src/simpleTicket.js"
   },
   "packageManager": "pnpm@11.19.0",
   "scripts": {

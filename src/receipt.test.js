@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cafeReceipt, calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { normalizePrinterMarkup, parsePrinterMarkup, printerInputExamples } from './printerMarkup.js';
+import { normalizeTicket, quickTicketExample } from './simpleTicket.js';
 
 test('reference order: $15.75 + 8.5% tax = $17.09', () => {
   assert.deepEqual(calculateTotals(cafeReceipt.items, cafeReceipt.taxBasisPoints), {
@@ -106,4 +107,17 @@ test('real-world daily report keeps its cancellation and cash-book sections', ()
   assert.match(text, /01hvdv4kjcw318fr8ftg6fvhgl/);
   assert.match(text, /Bargeld am Ende des Tags:/);
   assert.match(text, /11725\.59/);
+});
+
+test('compact ticket API normalizes common item shapes without mutation', () => {
+  const input = { title: 'Order 2', items: [{ quantity: 2, name: 'Wraps', amount: '23.00' }, 'Water'], total: '25.00 EUR' };
+  const normalized = normalizeTicket(input);
+  assert.deepEqual(normalized.items, [
+    { id: 0, label: '2 x Wraps', amount: '23.00' },
+    { id: 1, label: 'Water', amount: '' },
+  ]);
+  assert.equal(normalized.total, '25.00 EUR');
+  assert.equal(input.items[0].name, 'Wraps');
+  assert.equal(normalizeTicket(quickTicketExample).items.length, 3);
+  assert.throws(() => normalizeTicket({ items: 'Wraps' }), TypeError);
 });

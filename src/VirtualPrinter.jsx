@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import JsBarcode from 'jsbarcode';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { parsePrinterMarkup } from './printerMarkup.js';
+import { normalizeTicket } from './simpleTicket.js';
 import './VirtualPrinter.css';
 
 function PrinterIcon() {
@@ -68,25 +69,51 @@ function MarkupPaper({ content, logo }) {
   </div>;
 }
 
+function TicketPaper({ ticket }) {
+  const data = normalizeTicket(ticket);
+  return <div className="vp-ticket-content" role="document" aria-label="Quick ticket">
+    <header className="vp-ticket-heading">
+      <span className="vp-ticket-badge" aria-hidden="true"><PrinterIcon /></span>
+      <h2>{data.title}</h2>
+      {data.subtitle && <p>{data.subtitle}</p>}
+    </header>
+    <div className="vp-ticket-lines">
+      {data.lines.map(line => <div key={line.id}>{line.text}</div>)}
+    </div>
+    <div className="vp-ticket-items">
+      {data.items.map(item => <div className="vp-ticket-row" key={item.id}>
+        <span>{item.label}</span>
+        {item.amount && <strong>{item.amount}</strong>}
+      </div>)}
+    </div>
+    {data.total && <div className="vp-ticket-total"><span>Total</span><strong>{data.total}</strong></div>}
+    {data.footer && <footer className="vp-ticket-footer">{data.footer}</footer>}
+  </div>;
+}
+
 /**
- * Reusable visual printer. Pass either the structured `receipt` object or raw
- * printer `content` using the FEIEYUN small-ticket control tags.
+ * Reusable visual printer. Pass one of `receipt`, raw FEIEYUN `content`, or a
+ * compact `ticket` object. `cameraPosition` controls the punch-hole treatment.
  */
-export function VirtualPrinter({ receipt, content, logo, initiallyPrinted = false, className = '' }) {
+export function VirtualPrinter({ receipt, content, ticket, logo, cameraPosition = 'center', initiallyPrinted = false, className = '' }) {
   const hasContent = content !== undefined && content !== null;
-  if (!hasContent && !receipt) throw new TypeError('VirtualPrinter requires receipt or content.');
+  const hasTicket = ticket !== undefined && ticket !== null;
+  if (!hasContent && !hasTicket && !receipt) throw new TypeError('VirtualPrinter requires receipt, content, or ticket.');
+  const camera = ['center', 'left', 'right'].includes(cameraPosition) ? cameraPosition : 'center';
   const headingId = useId();
   const statusId = useId();
   const nextId = useRef(0);
   const [job, setJob] = useState(() => ({
-    id: 0, phase: initiallyPrinted ? 'printed' : 'ready', receipt: hasContent ? null : receipt, content: hasContent ? content : null,
+    id: 0, phase: initiallyPrinted ? 'printed' : 'ready', receipt: hasContent || hasTicket ? null : receipt,
+    content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null,
   }));
   const printing = job.phase === 'printing';
   const data = job.receipt;
   const isMarkup = job.content !== null;
-  const totals = isMarkup ? null : calculateTotals(data.items, data.taxBasisPoints);
-  const money = isMarkup ? null : moneyFormatter(data.locale, data.currency);
-  const taxRate = isMarkup ? null : new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100);
+  const isTicket = !isMarkup && job.ticket !== null;
+  const totals = isMarkup || isTicket ? null : calculateTotals(data.items, data.taxBasisPoints);
+  const money = isMarkup || isTicket ? null : moneyFormatter(data.locale, data.currency);
+  const taxRate = isMarkup || isTicket ? null : new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100);
 
   function finishPrint() {
     setJob(current => current.phase === 'printing' ? { ...current, phase: 'printed' } : current);
@@ -110,16 +137,18 @@ export function VirtualPrinter({ receipt, content, logo, initiallyPrinted = fals
   function printReceipt() {
     if (printing) return;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setJob({ id: ++nextId.current, phase: reduceMotion ? 'printed' : 'printing', receipt: hasContent ? null : receipt, content: hasContent ? content : null });
+    setJob({ id: ++nextId.current, phase: reduceMotion ? 'printed' : 'printing', receipt: hasContent || hasTicket ? null : receipt,
+      content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null });
   }
 
-  return <section className={`vp ${className}`} data-phase={job.phase} aria-label="Virtual receipt printer">
+  return <section className={`vp vp--camera-${camera} ${className}`} data-phase={job.phase} aria-label="Virtual receipt printer">
     <button className="vp-print" type="button" onClick={printReceipt} disabled={printing} aria-describedby={statusId}>
       <PrinterIcon />
       <span>{printing ? 'Printing…' : 'Print Receipt'}</span>
     </button>
 
-    <div className="vp-machine">
+    <div className={`vp-machine vp-machine--camera-${camera}`}>
+      <div className="vp-camera-island" aria-hidden="true"><span className="vp-camera-lens" /></div>
       <div className="vp-housing" aria-hidden="true" />
       <div className="vp-status" role="status" aria-live="polite" aria-atomic="true" id={statusId}>
         <span className={`vp-status-icon ${printing ? 'vp-status-icon--printing' : ''}`} aria-hidden="true">
@@ -130,9 +159,9 @@ export function VirtualPrinter({ receipt, content, logo, initiallyPrinted = fals
       </div>
       <div className="vp-slot" aria-hidden="true" />
       <div className="vp-paper-window" aria-busy={printing}>
-        <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : ''}`} aria-labelledby={isMarkup ? undefined : headingId} aria-label={isMarkup ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}
+        <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : isTicket ? 'vp-paper--ticket' : ''}`} aria-labelledby={isMarkup || isTicket ? undefined : headingId} aria-label={isMarkup || isTicket ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}
           onAnimationEnd={event => { if (event.animationName === 'vp-feed' && event.target === event.currentTarget) finishPrint(); }}>
-          {isMarkup ? <MarkupPaper content={job.content} logo={logo} /> : <>
+          {isMarkup ? <MarkupPaper content={job.content} logo={logo} /> : isTicket ? <TicketPaper ticket={job.ticket} /> : <>
             <header className="vp-merchant">
               <span className="vp-cup"><CupIcon /></span>
               <h2 id={headingId}>{data.merchant.name}</h2>
