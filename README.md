@@ -6,13 +6,9 @@ A reusable React + CSS receipt printer based on the Aura Artisan Café reference
 
 The demo starts with an input step and a printer preview step. On small screens
 these are two focused screens; on larger screens they sit side by side. Choose a
-quick ticket, edit a FEIEYUN payload, or write a custom layout, then choose where
-the printer camera sits and open the preview. **Print Receipt** replays the paper
-feed; the status changes while printing and the button prevents duplicate jobs.
-The preview header also has a fullscreen control: the printer is pinned to the
-viewport edge with safe-area padding so it can be tested around a real phone
-camera cutout. On iPhone, add the Pages demo to the Home Screen for a true
-standalone fullscreen surface, then open the preview and use the expand button.
+quick ticket, edit a FEIEYUN payload, or write a custom layout, then open the
+preview. **Print Receipt** replays the paper feed; the status changes while
+printing and the button prevents duplicate jobs.
 
 ## Run locally
 
@@ -120,7 +116,6 @@ physical printer, open a cash drawer, play audio, or produce a scannable QR code
 | `content` | One of `receipt`/`content`/`ticket` | Raw printer markup/plain text |
 | `ticket` | One of `receipt`/`content`/`ticket` | Compact title/items/total/footer ticket |
 | `logo` | Default mark | Image URL or React node for `<LOGO>` |
-| `cameraPosition` | `center` | `center`, `left`, or `right` camera treatment |
 | `initiallyPrinted` | `false` | Show a completed receipt on mount |
 | `className` | `''` | Optional host styling hook |
 
