@@ -9,6 +9,10 @@ these are two focused screens; on larger screens they sit side by side. Choose a
 quick ticket, edit a FEIEYUN payload, or write a custom layout, then choose where
 the printer camera sits and open the preview. **Print Receipt** replays the paper
 feed; the status changes while printing and the button prevents duplicate jobs.
+The preview header also has a fullscreen control: the printer is pinned to the
+viewport edge with safe-area padding so it can be tested around a real phone
+camera cutout. On iPhone, add the Pages demo to the Home Screen for a true
+standalone fullscreen surface, then open the preview and use the expand button.
 
 ## Run locally
 

@@ -51,6 +51,21 @@
   box-shadow: inset 0 1px 0 #ffffff0c, 0 8px 14px #0004;
   transition: left 260ms ease, right 260ms ease, width 260ms ease, height 260ms ease, border-radius 260ms ease;
 }
+.vp-camera-island::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  bottom: -18px;
+  width: 42px;
+  height: 20px;
+  border: 1px solid #26262a;
+  border-top: 0;
+  border-radius: 0 0 11px 11px;
+  background: #050506;
+  box-shadow: 0 8px 12px #0004;
+  transform: translateX(-50%);
+}
 .vp-camera-island::after {
   content: '';
   position: absolute;
@@ -66,9 +81,11 @@
 .vp-camera-lens { position: absolute; left: 17px; top: 9px; width: 10px; height: 10px; border: 2px solid #303138; border-radius: 50%; background: #0b0b0d; }
 .vp-machine--camera-center .vp-camera-island { left: 50%; transform: translateX(-50%); }
 .vp-machine--camera-left .vp-camera-island { left: 28px; width: 30px; height: 30px; border-radius: 50%; }
+.vp-machine--camera-left .vp-camera-island::before { width: 18px; height: 20px; border-radius: 0 0 8px 8px; }
 .vp-machine--camera-left .vp-camera-island::after { display: none; }
 .vp-machine--camera-left .vp-camera-lens { left: 8px; top: 8px; }
 .vp-machine--camera-right .vp-camera-island { right: 28px; width: 30px; height: 30px; border-radius: 50%; }
+.vp-machine--camera-right .vp-camera-island::before { width: 18px; height: 20px; border-radius: 0 0 8px 8px; }
 .vp-machine--camera-right .vp-camera-island::after { display: none; }
 .vp-machine--camera-right .vp-camera-lens { left: 8px; top: 8px; }
 .vp[data-phase="printing"] .vp-camera-island { animation: vp-island-expand 700ms cubic-bezier(.2,.8,.2,1) both; }

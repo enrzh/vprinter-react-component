@@ -1,0 +1,9 @@
+{
+  "name": "Virtual Printer Preview",
+  "short_name": "Virtual Printer",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#09090a",
+  "theme_color": "#09090a"
+}
