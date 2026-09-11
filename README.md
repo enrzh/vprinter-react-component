@@ -28,11 +28,26 @@ payment processing, secrets, or physical printing are involved.
 
 ## Reuse the component
 
-Copy `src/VirtualPrinter.jsx`, `src/VirtualPrinter.css`, `src/receipt.js`, and
-`src/simpleTicket.js` into a React app and install `jsbarcode`. The component
-imports its scoped CSS; `printerMarkup.js`, `printerExamples.js`, `demo.css` and
-`main.jsx` are only used by the standalone demo, except when you want the
-raw-input parser.
+Install directly from the repository in an existing React app:
+
+```sh
+npm install github:enrzh/vprinter-react-component
+# or: pnpm add github:enrzh/vprinter-react-component
+```
+
+Then import the component and optional helpers by package name:
+
+```jsx
+import { VirtualPrinter, normalizeTicket } from 'vprinter-react-component';
+```
+
+React is a peer dependency, so the app's existing React runtime is reused.
+
+For a source-copy integration, copy `src/VirtualPrinter.jsx`,
+`src/VirtualPrinter.css`, `src/receipt.js`, and `src/simpleTicket.js` into a
+React app and install `jsbarcode`. The component imports its scoped CSS;
+`printerMarkup.js`, `printerExamples.js`, `demo.css` and `main.jsx` are only
+used by the standalone demo, except when you want the raw-input parser.
 
 ```jsx
 import { VirtualPrinter } from './VirtualPrinter.jsx';
