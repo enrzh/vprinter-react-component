@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import JsBarcode from 'jsbarcode';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
+import { parsePrinterMarkup } from './printerMarkup.js';
 import './VirtualPrinter.css';
 
 function PrinterIcon() {
@@ -27,25 +28,65 @@ function Barcode({ value }) {
   return <svg className="vp-barcode" ref={element} preserveAspectRatio="none" role="img" aria-label={`Authorization barcode ${value}`} />;
 }
 
+function MarkupLogo({ logo }) {
+  if (logo && typeof logo === 'string') return <img className="vp-markup-logo-image" src={logo} alt="" />;
+  return logo || <span className="vp-markup-logo-mark" aria-hidden="true">𝕏</span>;
+}
+
+function MarkupPart({ part, partIndex, logo }) {
+  if (part.type === 'logo') {
+    return <span className="vp-markup-logo" key={partIndex}><MarkupLogo logo={logo} /></span>;
+  }
+  if (part.type === 'qr') {
+    return <span className={`vp-markup-qr ${part.center ? 'vp-markup-qr--center' : ''} ${part.right ? 'vp-markup-qr--right' : ''}`} key={partIndex} role="img" aria-label={`QR code: ${part.text || 'empty'}`}>
+      <span className="vp-markup-qr-box" aria-hidden="true">QR</span>
+      <code className="vp-markup-qr-value">{part.text}</code>
+    </span>;
+  }
+  if (part.type === 'control') {
+    return <span className={`vp-markup-control vp-markup-control--${part.control}`} key={partIndex} role="img" aria-label={part.control === 'cut' ? 'Paper cut' : 'Printer plugin command'} aria-hidden="false" />;
+  }
+  const className = [
+    part.bold && 'vp-markup-bold',
+    part.doubleHeight && 'vp-markup-double-height',
+    part.doubleWidth && 'vp-markup-double-width',
+    part.right && 'vp-markup-part--right',
+  ].filter(Boolean).join(' ');
+  return <span className={className || undefined} key={partIndex}>{part.text}</span>;
+}
+
+function MarkupPaper({ content, logo }) {
+  const lines = parsePrinterMarkup(content);
+  return <div className="vp-markup-content" role="document" aria-label="Printer document">
+    {lines.map((line, lineIndex) => {
+      const lineLength = line.parts.reduce((length, part) => length + (part.type === 'text' ? part.text.length : 0), 0);
+      const dense = lineLength > 38 && !line.parts.some(part => part.type === 'logo');
+      return <div className={`vp-markup-line ${line.center ? 'vp-markup-line--center' : ''} ${line.right ? 'vp-markup-line--right' : ''} ${dense ? 'vp-markup-line--dense' : ''}`} key={lineIndex}>
+      {line.parts.map((part, partIndex) => <MarkupPart part={part} partIndex={partIndex} logo={logo} />)}
+      </div>;
+    })}
+  </div>;
+}
+
 /**
- * Reusable visual printer. Import with its CSS (included above).
- * receipt: the structured shape shown in cafeReceipt; never card numbers, only last4.
- * initiallyPrinted: show a completed receipt on mount (default false).
- * className: optional host styling hook. Each instance owns its own print state.
- * A print captures the receipt prop; later prop updates apply to the next print.
+ * Reusable visual printer. Pass either the structured `receipt` object or raw
+ * printer `content` using the FEIEYUN small-ticket control tags.
  */
-export function VirtualPrinter({ receipt, initiallyPrinted = false, className = '' }) {
+export function VirtualPrinter({ receipt, content, logo, initiallyPrinted = false, className = '' }) {
+  const hasContent = content !== undefined && content !== null;
+  if (!hasContent && !receipt) throw new TypeError('VirtualPrinter requires receipt or content.');
   const headingId = useId();
   const statusId = useId();
   const nextId = useRef(0);
   const [job, setJob] = useState(() => ({
-    id: 0, phase: initiallyPrinted ? 'printed' : 'ready', receipt,
+    id: 0, phase: initiallyPrinted ? 'printed' : 'ready', receipt: hasContent ? null : receipt, content: hasContent ? content : null,
   }));
   const printing = job.phase === 'printing';
   const data = job.receipt;
-  const totals = calculateTotals(data.items, data.taxBasisPoints);
-  const money = moneyFormatter(data.locale, data.currency);
-  const taxRate = new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100);
+  const isMarkup = job.content !== null;
+  const totals = isMarkup ? null : calculateTotals(data.items, data.taxBasisPoints);
+  const money = isMarkup ? null : moneyFormatter(data.locale, data.currency);
+  const taxRate = isMarkup ? null : new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100);
 
   function finishPrint() {
     setJob(current => current.phase === 'printing' ? { ...current, phase: 'printed' } : current);
@@ -69,7 +110,7 @@ export function VirtualPrinter({ receipt, initiallyPrinted = false, className = 
   function printReceipt() {
     if (printing) return;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setJob({ id: ++nextId.current, phase: reduceMotion ? 'printed' : 'printing', receipt });
+    setJob({ id: ++nextId.current, phase: reduceMotion ? 'printed' : 'printing', receipt: hasContent ? null : receipt, content: hasContent ? content : null });
   }
 
   return <section className={`vp ${className}`} data-phase={job.phase} aria-label="Virtual receipt printer">
@@ -89,40 +130,42 @@ export function VirtualPrinter({ receipt, initiallyPrinted = false, className = 
       </div>
       <div className="vp-slot" aria-hidden="true" />
       <div className="vp-paper-window" aria-busy={printing}>
-        <article key={job.id} className="vp-paper" aria-labelledby={headingId} aria-hidden={job.phase === 'ready'}
+        <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : ''}`} aria-labelledby={isMarkup ? undefined : headingId} aria-label={isMarkup ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}
           onAnimationEnd={event => { if (event.animationName === 'vp-feed' && event.target === event.currentTarget) finishPrint(); }}>
-          <header className="vp-merchant">
-            <span className="vp-cup"><CupIcon /></span>
-            <h2 id={headingId}>{data.merchant.name}</h2>
-            <address>{data.merchant.address.map((line, i) => <span key={i}>{line}</span>)}
-              {data.merchant.phone && <span>Tel: {data.merchant.phone}</span>}
-            </address>
-          </header>
+          {isMarkup ? <MarkupPaper content={job.content} logo={logo} /> : <>
+            <header className="vp-merchant">
+              <span className="vp-cup"><CupIcon /></span>
+              <h2 id={headingId}>{data.merchant.name}</h2>
+              <address>{data.merchant.address.map((line, i) => <span key={i}>{line}</span>)}
+                {data.merchant.phone && <span>Tel: {data.merchant.phone}</span>}
+              </address>
+            </header>
 
-          <div className="vp-order">
-            <span>ORDER #{data.orderId}</span>
-            <time dateTime={data.issuedAt}>{formatOrderDate(data.issuedAt, data.locale, data.timeZone)}</time>
-          </div>
-          <table className="vp-items">
-            <caption className="vp-sr-only">Order items</caption>
-            <thead className="vp-sr-only"><tr><th scope="col">Item and quantity</th><th scope="col">Amount</th></tr></thead>
-            <tbody>{data.items.map(item => <tr key={item.id}>
-              <th scope="row">{item.quantity}x {item.name}</th>
-              <td>{money(item.quantity * item.unitAmount)}</td>
-            </tr>)}</tbody>
-          </table>
+            <div className="vp-order">
+              <span>ORDER #{data.orderId}</span>
+              <time dateTime={data.issuedAt}>{formatOrderDate(data.issuedAt, data.locale, data.timeZone)}</time>
+            </div>
+            <table className="vp-items">
+              <caption className="vp-sr-only">Order items</caption>
+              <thead className="vp-sr-only"><tr><th scope="col">Item and quantity</th><th scope="col">Amount</th></tr></thead>
+              <tbody>{data.items.map(item => <tr key={item.id}>
+                <th scope="row">{item.quantity}x {item.name}</th>
+                <td>{money(item.quantity * item.unitAmount)}</td>
+              </tr>)}</tbody>
+            </table>
 
-          <dl className="vp-totals">
-            <div><dt>Subtotal</dt><dd>{money(totals.subtotal)}</dd></div>
-            <div><dt>Tax ({taxRate}%)</dt><dd>{money(totals.tax)}</dd></div>
-            <div className="vp-total"><dt>Total</dt><dd>{money(totals.total)}</dd></div>
-          </dl>
-          <footer className="vp-payment">
-            <p className="vp-paid">Paid via {data.payment.method}{data.payment.last4 && ` (•••• ${data.payment.last4})`}</p>
-            <Barcode value={data.payment.authorization} />
-            <p className="vp-authorization">AUTH: {data.payment.authorization}</p>
-            <p className="vp-thanks">{data.footer}</p>
-          </footer>
+            <dl className="vp-totals">
+              <div><dt>Subtotal</dt><dd>{money(totals.subtotal)}</dd></div>
+              <div><dt>Tax ({taxRate}%)</dt><dd>{money(totals.tax)}</dd></div>
+              <div className="vp-total"><dt>Total</dt><dd>{money(totals.total)}</dd></div>
+            </dl>
+            <footer className="vp-payment">
+              <p className="vp-paid">Paid via {data.payment.method}{data.payment.last4 && ` (•••• ${data.payment.last4})`}</p>
+              <Barcode value={data.payment.authorization} />
+              <p className="vp-authorization">AUTH: {data.payment.authorization}</p>
+              <p className="vp-thanks">{data.footer}</p>
+            </footer>
+          </>}
         </article>
       </div>
     </div>

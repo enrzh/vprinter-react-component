@@ -30,7 +30,8 @@ payment processing, secrets, or physical printing are involved.
 
 Copy `src/VirtualPrinter.jsx`, `src/VirtualPrinter.css`, and `src/receipt.js`
 into a React app and install `jsbarcode`. The component imports its scoped CSS;
-`demo.css` and `main.jsx` are only used by this standalone demo.
+`printerMarkup.js`, `printerExamples.js`, `demo.css` and `main.jsx` are only used
+by the standalone demo, except when you want the raw-input parser.
 
 ```jsx
 import { VirtualPrinter } from './VirtualPrinter.jsx';
@@ -39,14 +40,50 @@ import { cafeReceipt } from './receipt.js';
 <VirtualPrinter receipt={cafeReceipt} initiallyPrinted />
 ```
 
+Raw printer content is supported through the `content` prop. The component turns
+the payload into safe text nodes, so user-provided content cannot become HTML:
+
+```jsx
+const order = `10-09-2026 22:10
+<BOLD>Bestellungsnummer: 002</BOLD>
+Bestellung-ID: ******2aad
+<B>Tisch: 13 (Space)</B>
+------------------------------------------------
+<B>1 x 63 DRAGON RIVER</B>`;
+
+<VirtualPrinter content={order} initiallyPrinted />
+```
+
+Supported FEIEYUN small-ticket commands are `<B>` and `<BOLD>` for bold text,
+`<C>` and `<RIGHT>` for alignment, `<CB>`/`<DB>` for centered or double-size
+text, `<L>` and `<W>` for doubled height or width, `<BR>` for a line break, and
+`<LOGO>` for a logo slot. `<QR>...</QR>` is shown as a safe QR preview with its
+payload, while `<CUT>` and `<PLUGIN>` are shown as non-executing printer control
+markers. Tags are case-insensitive. Existing newlines, repeated spaces,
+separators, Unicode and common entities such as `&nbsp;` and `&#x20;` are
+preserved. Payloads that contain escaped tags such as `\\<B>text\\</B>` are
+accepted too. Unknown tags remain literal text. Adjacent centered blocks
+(`<C>To Go</C><C>029</C>`) become separate lines, matching the printer dialect.
+Pass `logo` as an image URL or React node to replace the default mark used by
+`<LOGO>`. Long fixed-width report rows keep their spacing and can be scrolled
+inside the paper on narrow screens.
+
+`<B>` remains bold for compatibility with the restaurant payloads shown here;
+use `<CB>`, `<DB>`, `<L>`, or `<W>` when the source intends enlarged printer
+text. This component is a visual preview and does not send commands to a
+physical printer, open a cash drawer, play audio, or produce a scannable QR code.
+
 | Prop | Default | Purpose |
 | --- | --- | --- |
-| `receipt` | Required | Structured receipt, following `cafeReceipt` |
+| `receipt` | Required when `content` is absent | Structured receipt, following `cafeReceipt` |
+| `content` | Required when `receipt` is absent | Raw printer markup/plain text |
+| `logo` | Default mark | Image URL or React node for `<LOGO>` |
 | `initiallyPrinted` | `false` | Show a completed receipt on mount |
 | `className` | `''` | Optional host styling hook |
 
 Multiple instances are independent. Treat receipt data as immutable. Updated
-props are captured on the next print, leaving an existing receipt intact.
+props are captured on the next print, leaving an existing receipt intact. Use
+exactly one of `receipt` or `content` per instance.
 
 `cafeReceipt` documents the complete data shape. Item IDs must be unique;
 quantities are positive integers, amounts are nonnegative integers in the
