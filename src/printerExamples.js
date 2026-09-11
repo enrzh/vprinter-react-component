@@ -22,6 +22,11 @@ export const printerExamples = [
     input: printerInputExamples.controls,
   },
   {
+    id: 'real-world-daily',
+    label: 'Real-world Tagesabrechnung',
+    input: printerInputExamples.realWorldDaily,
+  },
+  {
     id: 'daily',
     label: 'Tagesabrechnung',
     input: printerInputExamples.daily,

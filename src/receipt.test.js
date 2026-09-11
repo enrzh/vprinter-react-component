@@ -94,3 +94,16 @@ test('settlement report keeps centered header and fixed-width totals', () => {
   assert.match(text, /Z#\s+Datum\s+19\.00%\s+7\.00%\s+Umsatz/);
   assert.match(text, /4446\.08/);
 });
+
+test('real-world daily report keeps its cancellation and cash-book sections', () => {
+  const text = parsePrinterMarkup(printerInputExamples.realWorldDaily)
+    .flatMap(line => line.parts)
+    .filter(part => part.type === 'text')
+    .map(part => part.text)
+    .join('');
+  assert.match(text, /TAGESABRECHNUNG \(Abgeschlossen\)/);
+  assert.match(text, /Heute wurde storniert:/);
+  assert.match(text, /01hvdv4kjcw318fr8ftg6fvhgl/);
+  assert.match(text, /Bargeld am Ende des Tags:/);
+  assert.match(text, /11725\.59/);
+});
