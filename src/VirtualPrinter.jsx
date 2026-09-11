@@ -33,18 +33,18 @@ function MarkupLogo({ logo }) {
   return logo || <span className="vp-markup-logo-mark" aria-hidden="true">𝕏</span>;
 }
 
-function MarkupPart({ part, partIndex, logo }) {
+function MarkupPart({ part, logo }) {
   if (part.type === 'logo') {
-    return <span className="vp-markup-logo" key={partIndex}><MarkupLogo logo={logo} /></span>;
+    return <span className="vp-markup-logo"><MarkupLogo logo={logo} /></span>;
   }
   if (part.type === 'qr') {
-    return <span className={`vp-markup-qr ${part.center ? 'vp-markup-qr--center' : ''} ${part.right ? 'vp-markup-qr--right' : ''}`} key={partIndex} role="img" aria-label={`QR code: ${part.text || 'empty'}`}>
+    return <span className={`vp-markup-qr ${part.center ? 'vp-markup-qr--center' : ''} ${part.right ? 'vp-markup-qr--right' : ''}`} role="img" aria-label={`QR code: ${part.text || 'empty'}`}>
       <span className="vp-markup-qr-box" aria-hidden="true">QR</span>
       <code className="vp-markup-qr-value">{part.text}</code>
     </span>;
   }
   if (part.type === 'control') {
-    return <span className={`vp-markup-control vp-markup-control--${part.control}`} key={partIndex} role="img" aria-label={part.control === 'cut' ? 'Paper cut' : 'Printer plugin command'} aria-hidden="false" />;
+    return <span className={`vp-markup-control vp-markup-control--${part.control}`} role="img" aria-label={part.control === 'cut' ? 'Paper cut' : 'Printer plugin command'} aria-hidden="false" />;
   }
   const className = [
     part.bold && 'vp-markup-bold',
@@ -52,7 +52,7 @@ function MarkupPart({ part, partIndex, logo }) {
     part.doubleWidth && 'vp-markup-double-width',
     part.right && 'vp-markup-part--right',
   ].filter(Boolean).join(' ');
-  return <span className={className || undefined} key={partIndex}>{part.text}</span>;
+  return <span className={className || undefined}>{part.text}</span>;
 }
 
 function MarkupPaper({ content, logo }) {
@@ -62,7 +62,7 @@ function MarkupPaper({ content, logo }) {
       const lineLength = line.parts.reduce((length, part) => length + (part.type === 'text' ? part.text.length : 0), 0);
       const dense = lineLength > 38 && !line.parts.some(part => part.type === 'logo');
       return <div className={`vp-markup-line ${line.center ? 'vp-markup-line--center' : ''} ${line.right ? 'vp-markup-line--right' : ''} ${dense ? 'vp-markup-line--dense' : ''}`} key={lineIndex}>
-      {line.parts.map((part, partIndex) => <MarkupPart part={part} partIndex={partIndex} logo={logo} />)}
+      {line.parts.map((part, partIndex) => <MarkupPart part={part} logo={logo} key={partIndex} />)}
       </div>;
     })}
   </div>;
