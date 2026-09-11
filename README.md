@@ -8,8 +8,16 @@ page background or add a card around itself.
 The demo starts with an input step and a printer preview step. On small screens
 these are two focused screens; on larger screens they sit side by side. Choose a
 quick ticket, edit a FEIEYUN payload, or write a custom layout, then open the
-preview. **Print Receipt** replays the paper feed; the status changes while
-printing and the button prevents duplicate jobs.
+preview. Each preview opens with an empty printer. The white printer icon on
+the casing feeds the paper; the scissors button tears it off and leaves the
+printer ready for another copy. Long receipts scroll beneath the casing using
+touch, a mouse wheel, or the keyboard. These icon buttons have accessible labels.
+The demo's share icon exports the printer and the entire receipt as a transparent PNG,
+including all rows and fixed-width columns. Supported devices open the native
+share sheet; other browsers download `receipt.png`. External logos must allow
+cross-origin image access to be included in the export.
+Image sharing is exclusive to the demo. Neither the share button nor its
+image-export dependency is included in the installed React component.
 
 ## Run locally
 
@@ -48,10 +56,10 @@ import { VirtualPrinter } from 'vprinter-react-component';
 React is a peer dependency, so the app's existing React runtime is reused.
 
 For a source-copy integration, copy `src/VirtualPrinter.jsx`,
-`src/VirtualPrinter.css`, `src/receipt.js`, and `src/simpleTicket.js` into a
-React app and install `jsbarcode`. The component imports its scoped CSS;
-`printerMarkup.js`, `printerExamples.js`, `demo.css` and `main.jsx` are only
-used by the standalone demo, except when you want the raw-input parser.
+`src/VirtualPrinter.css`, `src/receipt.js`, `src/simpleTicket.js`,
+and `src/printerMarkup.js` into a React app and install `jsbarcode`.
+The component imports its scoped CSS. The demo files, including `demoImage.js`,
+are not needed to use the component.
 
 ```jsx
 import { VirtualPrinter } from './VirtualPrinter.jsx';
@@ -138,6 +146,10 @@ Pass only a masked payment `last4`, never a full card number. `authorization`
 must be a nonempty printable ASCII string suitable for CODE128. The barcode
 uses light bars on dark to match the reference; its value is also displayed in
 text for accessibility and readers that cannot scan inverted barcodes.
+
+Set `--vp-paper-height` on the component to change the scroll area height
+(default: `60svh`). The demo starts empty; consumers can still use
+`initiallyPrinted` to show paper immediately.
 
 The CSS variables `--vp-ink`, `--vp-muted`, `--vp-paper`, and
 `--vp-feed-duration` can be overridden on the component. The default animation

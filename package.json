@@ -8,7 +8,12 @@
   "main": "./src/index.js",
   "module": "./src/index.js",
   "files": [
-    "src",
+    "src/index.js",
+    "src/VirtualPrinter.jsx",
+    "src/VirtualPrinter.css",
+    "src/receipt.js",
+    "src/printerMarkup.js",
+    "src/simpleTicket.js",
     "README.md",
     "package.json"
   ],
@@ -32,6 +37,7 @@
     "react": ">=18.0.0"
   },
   "devDependencies": {
+    "html-to-image": "^1.11.13",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "vite": "8.3.0"
