@@ -1,6 +1,7 @@
 # React Virtual Printer
 
-A reusable React + CSS receipt printer based on the Aura Artisan Café reference.
+A small React receipt printer. It renders only the printer; it does not set a
+page background or add a card around itself.
 
 **[Open the demo](https://enrzh.github.io/vprinter-react-component/)**
 
@@ -35,10 +36,13 @@ npm install github:enrzh/vprinter-react-component
 # or: pnpm add github:enrzh/vprinter-react-component
 ```
 
-Then import the component and optional helpers by package name:
+Then import the component by package name. Pass one input and it is ready to
+drop into your own layout:
 
 ```jsx
-import { VirtualPrinter, normalizeTicket } from 'vprinter-react-component';
+import { VirtualPrinter } from 'vprinter-react-component';
+
+<VirtualPrinter content={`<C><BOLD>Order #029</BOLD></C>\n1 x Burger       9.99\n<B>Total          9.99</B>`} initiallyPrinted />
 ```
 
 React is a peer dependency, so the app's existing React runtime is reused.

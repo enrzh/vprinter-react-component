@@ -5,8 +5,10 @@
   --vp-shell: #2c2c2e;
   --vp-shell-edge: #1d1d1f;
   --vp-feed-duration: 2800ms;
-  width: min(100%, 600px);
-  margin-inline: auto;
+  width: 100%;
+  max-width: 600px;
+  margin: 0;
+  background: transparent;
   color: var(--vp-ink);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -18,13 +20,12 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 48px;
-  margin: 0 auto 32px;
-  padding: 11px 20px;
-  border: 1px solid #0071e3;
-  border-radius: 8px;
-  background: #0071e3;
-  color: #fff;
+  min-height: 40px;
+  margin: 0 0 24px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: #0071e3;
   font: 600 16px/1.3 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   cursor: pointer;
   touch-action: manipulation;
@@ -32,7 +33,7 @@
 }
 .vp-print svg { width: 21px; height: 21px; flex: none; }
 @media (hover: hover) {
-  .vp-print:hover:not(:disabled) { background: #0077ed; }
+  .vp-print:hover:not(:disabled) { color: #005bb5; text-decoration: underline; text-underline-offset: 3px; }
 }
 .vp-print:active:not(:disabled) { transform: translateY(1px); }
 .vp-print:focus-visible { outline: 2px solid #007aff; outline-offset: 3px; }
@@ -58,18 +59,17 @@
   display: flex;
   align-items: center;
   gap: 13px;
-  padding: 15px 18px;
-  border: 1px solid #d2d2d7;
-  border-radius: 12px;
-  background: #fff;
-  color: #1d1d1f;
+  padding: 15px 3px;
+  border: 0;
+  background: transparent;
+  color: #f5f5f7;
   font-size: 16px;
   font-weight: 500;
   line-height: 1.4;
 }
 .vp-status-icon { display: flex; width: 22px; height: 22px; color: #0071e3; flex: none; }
 .vp-status-icon svg { width: 100%; height: 100%; }
-.vp[data-phase="ready"] .vp-status-icon { color: #6e6e73; }
+.vp[data-phase="ready"] .vp-status-icon { color: #a1a1a6; }
 .vp-spinner { width: 21px; height: 21px; border: 2px solid #c7dfff; border-top-color: #0071e3; border-radius: 50%; animation: vp-spin 800ms linear infinite; }
 .vp-slot {
   position: absolute;
@@ -107,8 +107,6 @@
 .vp[data-phase="ready"] .vp-paper { visibility: hidden; }
 .vp[data-phase="printing"] .vp-paper { animation: vp-feed var(--vp-feed-duration) cubic-bezier(.22,.62,.28,1) both; }
 .vp-merchant { text-align: center; padding-bottom: 28px; }
-.vp-cup { display: flex; width: 43px; height: 43px; margin: 0 auto 12px; align-items: center; justify-content: center; border-radius: 50%; background: #f2f2f7; }
-.vp-cup svg { width: 27px; height: 27px; }
 .vp-merchant h2 { margin: 0 0 3px; font: 700 21px/1.3 "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
 .vp-merchant address { font-style: normal; color: var(--vp-muted); font-size: 15px; }
 .vp-merchant address span { display: block; }
@@ -151,8 +149,6 @@
 .vp-paper--ticket { padding: 34px 28px 42px; }
 .vp-ticket-content { font-size: 15px; line-height: 1.45; }
 .vp-ticket-heading { padding-bottom: 20px; border-bottom: 1px solid #d2d2d7; text-align: center; }
-.vp-ticket-badge { display: grid; width: 37px; height: 37px; margin: 0 auto 9px; place-items: center; border-radius: 50%; background: #f2f2f7; color: #1d1d1f; }
-.vp-ticket-badge svg { width: 20px; height: 20px; }
 .vp-ticket-heading h2 { margin: 0; font: 700 20px/1.25 "SFMono-Regular", Consolas, monospace; }
 .vp-ticket-heading p { margin: 5px 0 0; color: var(--vp-muted); font-size: 13px; }
 .vp-ticket-lines { padding-block: 17px 10px; color: var(--vp-muted); font-size: 13px; text-align: center; }
@@ -168,10 +164,10 @@
 @keyframes vp-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 520px) {
-  .vp-print { min-height: 46px; margin-bottom: 27px; font-size: 15px; padding: 10px 18px; }
+  .vp-print { min-height: 40px; margin-bottom: 20px; font-size: 15px; }
   .vp-machine { padding-top: 110px; }
   .vp-housing { height: 144px; border-radius: 28px; }
-  .vp-status { top: 30px; left: 15px; right: 15px; min-height: 57px; border-radius: 11px; padding: 13px 15px; gap: 11px; font-size: 15px; }
+  .vp-status { top: 30px; left: 18px; right: 18px; min-height: 57px; padding: 13px 0; gap: 11px; font-size: 15px; }
   .vp-slot { top: 104px; left: 20px; right: 20px; }
   .vp-paper-window { margin-inline: 24px; }
   .vp-paper { padding: 32px 18px 32px; font-size: 14px; }
