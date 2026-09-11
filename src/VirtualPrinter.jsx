@@ -12,12 +12,6 @@ function PrinterIcon() {
   </svg>;
 }
 
-function CupIcon() {
-  return <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
-    <path d="M6 10h14v8a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5zM20 11h2a4 4 0 0 1 0 8h-2M9 4v2m5-3v3m5-2v2" />
-  </svg>;
-}
-
 function Barcode({ value }) {
   const element = useRef(null);
   useEffect(() => {
@@ -73,7 +67,6 @@ function TicketPaper({ ticket }) {
   const data = normalizeTicket(ticket);
   return <div className="vp-ticket-content" role="document" aria-label="Quick ticket">
     <header className="vp-ticket-heading">
-      <span className="vp-ticket-badge" aria-hidden="true"><PrinterIcon /></span>
       <h2>{data.title}</h2>
       {data.subtitle && <p>{data.subtitle}</p>}
     </header>
@@ -161,7 +154,6 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
           onAnimationEnd={event => { if (event.animationName === 'vp-feed' && event.target === event.currentTarget) finishPrint(); }}>
           {isMarkup ? <MarkupPaper content={job.content} logo={logo} /> : isTicket ? <TicketPaper ticket={job.ticket} /> : <>
             <header className="vp-merchant">
-              <span className="vp-cup"><CupIcon /></span>
               <h2 id={headingId}>{data.merchant.name}</h2>
               <address>{data.merchant.address.map((line, i) => <span key={i}>{line}</span>)}
                 {data.merchant.phone && <span>Tel: {data.merchant.phone}</span>}
