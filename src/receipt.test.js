@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cafeReceipt, calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
+import { normalizePrinterMarkup, parsePrinterMarkup, printerInputExamples } from './printerMarkup.js';
 
 test('reference order: $15.75 + 8.5% tax = $17.09', () => {
   assert.deepEqual(calculateTotals(cafeReceipt.items, cafeReceipt.taxBasisPoints), {
@@ -37,4 +38,59 @@ test('formatting supports different currency minor units', () => {
 test('receipt timestamp uses its explicit timezone', () => {
   assert.equal(formatOrderDate(cafeReceipt.issuedAt, 'en-GB', 'UTC'), '27 AUG 2026 00:00');
   assert.match(formatOrderDate(cafeReceipt.issuedAt, 'en-GB', 'America/New_York'), /26 AUG 2026 20:00/);
+});
+
+test('printer markup preserves lines, whitespace, bold, centering and logos', () => {
+  const lines = parsePrinterMarkup('<LOGO><BR><C><BOLD>Bestellung: 002</BOLD></C><BR>Tisch: 13');
+  assert.equal(lines[0].parts[0].type, 'logo');
+  assert.equal(lines[1].center, true);
+  assert.deepEqual(lines[1].parts[0], { type: 'text', text: 'Bestellung: 002', bold: true, center: true });
+  assert.equal(lines[2].parts[0].text, 'Tisch: 13');
+});
+
+test('adjacent centered blocks form separate lines in printer dialect output', () => {
+  const lines = parsePrinterMarkup('<C><B>To Go</B></C><C><B>002</B></C>');
+  assert.deepEqual(lines.filter(line => line.parts.length).map(line => line.parts[0].text), ['To Go', '002']);
+  assert.ok(lines.filter(line => line.parts.length).every(line => line.center));
+});
+
+test('FEIEYUN alignment, size, QR and device commands are represented', () => {
+  const lines = parsePrinterMarkup('<CB>Title</CB><BR><C><L>High</L></C><BR><C><W>Wide</W></C><BR><RIGHT>42.99</RIGHT><BR><QR>https://example.test</QR><BR><CUT><PLUGIN>');
+  assert.deepEqual(lines[0].parts[0], {
+    type: 'text', text: 'Title', bold: false, center: true, doubleHeight: true, doubleWidth: true,
+  });
+  assert.equal(lines[1].parts[0].doubleHeight, true);
+  assert.equal(lines[2].parts[0].doubleWidth, true);
+  assert.equal(lines[3].right, true);
+  assert.deepEqual(lines[4].parts[0], { type: 'qr', text: 'https://example.test', center: false });
+  assert.deepEqual(lines.filter(line => line.parts.at(-1)?.type === 'control').map(line => line.parts[0].control), ['cut', 'plugin']);
+});
+
+test('FEIEYUN control tags accept escaped and case-insensitive forms', () => {
+  const lines = parsePrinterMarkup('\\<right>right\\</RIGHT>\\<br>\\<cut>');
+  assert.equal(lines[0].parts[0].text, 'right');
+  assert.equal(lines[0].right, true);
+  assert.equal(lines.find(line => line.parts[0]?.type === 'control')?.parts[0].control, 'cut');
+});
+
+test('printer markup accepts escaped tags and common entities without HTML injection', () => {
+  assert.equal(normalizePrinterMarkup('\\<B>Bar &amp; Karte\\</B>'), '<B>Bar &amp; Karte</B>');
+  const lines = parsePrinterMarkup('A <script>alert(1)</script> &#x20; B &nbsp; C');
+  assert.equal(lines[0].parts.map(part => part.text).join(''), 'A <script>alert(1)</script>   B \u00a0 C');
+});
+
+test('all supplied input families produce printable line models', () => {
+  for (const input of Object.values(printerInputExamples)) {
+    const lines = parsePrinterMarkup(input);
+    assert.ok(lines.length > 0);
+    assert.ok(lines.some(line => line.parts.some(part => part.type === 'text' || part.type === 'logo')));
+  }
+});
+
+test('settlement report keeps centered header and fixed-width totals', () => {
+  const lines = parsePrinterMarkup(printerInputExamples.settlement);
+  const text = lines.flatMap(line => line.parts).filter(part => part.type === 'text').map(part => part.text).join('');
+  assert.equal(lines.slice(0, 4).filter(line => line.center).length, 4);
+  assert.match(text, /Z#\s+Datum\s+19\.00%\s+7\.00%\s+Umsatz/);
+  assert.match(text, /4446\.08/);
 });

@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./styles.css": "./src/VirtualPrinter.css",
+    "./markup": "./src/printerMarkup.js"
+  },
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
