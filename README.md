@@ -53,6 +53,13 @@ import { VirtualPrinter } from 'vprinter-react-component';
 <VirtualPrinter content={`<C><BOLD>Order #029</BOLD></C>\n1 x Burger       9.99\n<B>Total          9.99</B>`} initiallyPrinted />
 ```
 
+Long receipts scroll by default. Set `scrollable={false}` when the full paper
+should remain visible and grow with its content:
+
+```jsx
+<VirtualPrinter content={report} scrollable={false} />
+```
+
 React is a peer dependency, so the app's existing React runtime is reused.
 
 For a source-copy integration, copy `src/VirtualPrinter.jsx`,
@@ -129,6 +136,7 @@ physical printer, open a cash drawer, play audio, or produce a scannable QR code
 | `ticket` | One of `receipt`/`content`/`ticket` | Compact title/items/total/footer ticket |
 | `logo` | Default mark | Image URL or React node for `<LOGO>` |
 | `initiallyPrinted` | `false` | Show a completed receipt on mount |
+| `scrollable` | `true` | Constrain long paper to a scrollable area, or show the full receipt |
 | `className` | `''` | Optional host styling hook |
 
 Multiple instances are independent. Treat receipt data as immutable. Updated

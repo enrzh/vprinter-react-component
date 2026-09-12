@@ -63,6 +63,7 @@ function Demo() {
   const [mode, setMode] = useState('quick');
   const [step, setStep] = useState('setup');
   const [previewId, setPreviewId] = useState(0);
+  const [scrollable, setScrollable] = useState(true);
   const preview = useRef(null);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState('');
@@ -99,6 +100,7 @@ function Demo() {
   }
 
   const printerProps = mode === 'quick' ? { ticket: quickTicket } : { content: mode === 'custom' ? customContent : markupContent };
+  printerProps.scrollable = scrollable;
 
   async function shareReceipt() {
     const printer = preview.current?.querySelector('.vp');
@@ -146,6 +148,12 @@ function Demo() {
               <span>Custom content <small>Plain text and FEIEYUN tags are both accepted</small></span>
               <textarea className="demo-code" rows="15" value={customContent} onChange={event => setCustomContent(event.target.value)} />
             </label>}
+
+        <fieldset className="demo-print-layout">
+          <legend>Receipt height</legend>
+          <label><input type="radio" name="receipt-height" checked={scrollable} onChange={() => setScrollable(true)} /> Scroll long receipts</label>
+          <label><input type="radio" name="receipt-height" checked={!scrollable} onChange={() => setScrollable(false)} /> Show full receipt</label>
+        </fieldset>
 
         <button type="button" className="demo-next" onClick={() => { setPreviewId(id => id + 1); setShareError(''); setStep('preview'); }}>
           <span>Open printer preview</span><ArrowIcon />
