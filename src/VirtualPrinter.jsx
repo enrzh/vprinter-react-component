@@ -1,9 +1,11 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import JsBarcode from 'jsbarcode';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { parsePrinterMarkup } from './printerMarkup.js';
 import { normalizeTicket } from './simpleTicket.js';
 import './VirtualPrinter.css';
+
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 function PrinterIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -88,15 +90,36 @@ function TicketPaper({ ticket }) {
  * Reusable visual printer. Pass one of `receipt`, raw FEIEYUN `content`, or a
  * compact `ticket` object.
  */
-export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinted = false, scrollable = true, className = '' }) {
+export function VirtualPrinter({
+  receipt,
+  content,
+  ticket,
+  logo,
+  initiallyPrinted = false,
+  scrollable = true,
+  paperMaxHeight,
+  resetKey,
+  onPhaseChange,
+  onPrintStart,
+  onPrinted,
+  onTear,
+  className = '',
+}) {
   const hasContent = content !== undefined && content !== null;
   const hasTicket = ticket !== undefined && ticket !== null;
-  if (!hasContent && !hasTicket && !receipt) throw new TypeError('VirtualPrinter requires receipt, content, or ticket.');
+  const hasReceipt = receipt !== undefined && receipt !== null;
+  if ([hasReceipt, hasContent, hasTicket].filter(Boolean).length !== 1) {
+    throw new TypeError('VirtualPrinter requires exactly one of receipt, content, or ticket.');
+  }
+  if (hasContent && typeof content !== 'string') throw new TypeError('content must be a string.');
+  if (hasReceipt && (typeof receipt !== 'object' || Array.isArray(receipt))) throw new TypeError('receipt must be an object.');
   const headingId = useId();
   const statusId = useId();
   const nextId = useRef(0);
   const printButton = useRef(null);
   const paperScroll = useRef(null);
+  const previousResetKey = useRef(resetKey);
+  const previousPhase = useRef(initiallyPrinted ? 'printed' : 'ready');
   const [job, setJob] = useState(() => ({
     id: 0, phase: initiallyPrinted ? 'printed' : 'ready', receipt: hasContent || hasTicket ? null : receipt,
     content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null,
@@ -106,10 +129,29 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
   const data = job.receipt;
   const isMarkup = job.content !== null;
   const isTicket = !isMarkup && job.ticket !== null;
+  const isScrollable = scrollable !== false;
   const totals = isMarkup || isTicket ? null : calculateTotals(data.items, data.taxBasisPoints);
   const money = isMarkup || isTicket ? null : moneyFormatter(data.locale, data.currency);
   const taxRate = isMarkup || isTicket ? null : new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100);
   const statusText = printing ? 'Printing your receipt' : tearing ? 'Tearing off receipt' : job.phase === 'printed' ? 'Receipt printed' : 'Ready to print';
+
+  useEffect(() => {
+    const previous = previousPhase.current;
+    if (previous !== job.phase) {
+      onPhaseChange?.(job.phase);
+      if (job.phase === 'printing') onPrintStart?.();
+      if (job.phase === 'printed') onPrinted?.();
+      if (job.phase === 'ready' && previous === 'tearing') onTear?.();
+    }
+    previousPhase.current = job.phase;
+  }, [job.phase, onPhaseChange, onPrintStart, onPrinted, onTear]);
+
+  useIsomorphicLayoutEffect(() => {
+    if (previousResetKey.current === resetKey) return;
+    previousResetKey.current = resetKey;
+    nextId.current = 0;
+    setJob(current => ({ ...current, id: 0, phase: 'ready' }));
+  }, [resetKey]);
 
   function finishTear() {
     setJob(current => current.phase === 'tearing' ? { ...current, phase: 'ready' } : current);
@@ -159,7 +201,10 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
       content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null });
   }
 
-  return <section className={`vp ${className}`} data-phase={job.phase} data-scrollable={scrollable ? 'true' : 'false'} aria-label="Virtual receipt printer">
+  const paperStyle = paperMaxHeight == null ? undefined : {
+    '--vp-paper-height': typeof paperMaxHeight === 'number' ? `${paperMaxHeight}px` : String(paperMaxHeight),
+  };
+  return <section className={`vp ${className}`} data-phase={job.phase} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label="Virtual receipt printer">
     <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true" />
       <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>

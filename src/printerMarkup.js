@@ -1,4 +1,7 @@
-const SUPPORTED_TAGS = 'BOLD|B|C|BR|LOGO|CUT|PLUGIN|CB|DB|L|W|QR|RIGHT';
+export const SUPPORTED_PRINTER_TAGS = Object.freeze([
+  'BOLD', 'B', 'C', 'BR', 'LOGO', 'CUT', 'PLUGIN', 'CB', 'DB', 'L', 'W', 'QR', 'RIGHT',
+]);
+const SUPPORTED_TAGS = SUPPORTED_PRINTER_TAGS.join('|');
 const TAG_PATTERN = new RegExp(`</?(?:${SUPPORTED_TAGS})\\s*/?\\s*>`, 'gi');
 const TAG_NAME_PATTERN = /^<\/?\s*([A-Z]+)\s*\/?\s*>$/i;
 
