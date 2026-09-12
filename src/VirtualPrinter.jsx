@@ -88,7 +88,7 @@ function TicketPaper({ ticket }) {
  * Reusable visual printer. Pass one of `receipt`, raw FEIEYUN `content`, or a
  * compact `ticket` object.
  */
-export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinted = false, className = '' }) {
+export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinted = false, scrollable = true, className = '' }) {
   const hasContent = content !== undefined && content !== null;
   const hasTicket = ticket !== undefined && ticket !== null;
   if (!hasContent && !hasTicket && !receipt) throw new TypeError('VirtualPrinter requires receipt, content, or ticket.');
@@ -159,7 +159,7 @@ export function VirtualPrinter({ receipt, content, ticket, logo, initiallyPrinte
       content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null });
   }
 
-  return <section className={`vp ${className}`} data-phase={job.phase} aria-label="Virtual receipt printer">
+  return <section className={`vp ${className}`} data-phase={job.phase} data-scrollable={scrollable ? 'true' : 'false'} aria-label="Virtual receipt printer">
     <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true" />
       <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>

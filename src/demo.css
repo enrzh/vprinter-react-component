@@ -63,6 +63,10 @@ button { cursor: pointer; }
 .demo-field input:focus, .demo-field select:focus, .demo-field textarea:focus { border-color: #007aff; box-shadow: 0 0 0 3px #007aff26; }
 .demo-code { font: 12px/1.5 "SFMono-Regular", Consolas, monospace; tab-size: 4; }
 .demo-custom-field textarea { min-height: 250px; }
+.demo-print-layout { display: grid; gap: 8px; margin: 0 0 24px; padding: 0; border: 0; color: #424245; font-size: 12px; }
+.demo-print-layout legend { margin-bottom: 2px; color: #424245; font-weight: 600; }
+.demo-print-layout label { display: flex; align-items: center; gap: 8px; }
+.demo-print-layout input { accent-color: #0071e3; }
 
 .demo-next { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: space-between; padding: 12px 15px 12px 17px; border: 1px solid #0071e3; border-radius: 8px; background: #0071e3; color: #fff; font-weight: 600; }
 .demo-next:hover { background: #0077ed; }
