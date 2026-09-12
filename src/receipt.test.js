@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cafeReceipt, calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
-import { normalizePrinterMarkup, parsePrinterMarkup, printerInputExamples } from './printerMarkup.js';
+import { normalizePrinterMarkup, parsePrinterMarkup, printerInputExamples, SUPPORTED_PRINTER_TAGS } from './printerMarkup.js';
 import { normalizeTicket, quickTicketExample } from './simpleTicket.js';
 
 test('reference order: $15.75 + 8.5% tax = $17.09', () => {
@@ -65,6 +65,12 @@ test('FEIEYUN alignment, size, QR and device commands are represented', () => {
   assert.equal(lines[3].right, true);
   assert.deepEqual(lines[4].parts[0], { type: 'qr', text: 'https://example.test', center: false });
   assert.deepEqual(lines.filter(line => line.parts.at(-1)?.type === 'control').map(line => line.parts[0].control), ['cut', 'plugin']);
+});
+
+test('supported printer tags match the small-ticket command surface', () => {
+  assert.deepEqual(SUPPORTED_PRINTER_TAGS, [
+    'BOLD', 'B', 'C', 'BR', 'LOGO', 'CUT', 'PLUGIN', 'CB', 'DB', 'L', 'W', 'QR', 'RIGHT',
+  ]);
 });
 
 test('FEIEYUN control tags accept escaped and case-insensitive forms', () => {

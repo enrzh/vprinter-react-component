@@ -168,7 +168,7 @@ function Demo() {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M6 10H4v11h16V10h-2" /></svg>
           </button>
         </div>
-        <VirtualPrinter key={`${mode}-${previewId}`} {...printerProps} />
+        <VirtualPrinter resetKey={previewId} {...printerProps} />
         {shareError && <p role="alert">{shareError}</p>}
       </section>
     </div>

@@ -28,6 +28,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 pnpm test
 pnpm build
+pnpm build:lib
 pnpm preview
 ```
 
@@ -49,9 +50,15 @@ drop into your own layout:
 
 ```jsx
 import { VirtualPrinter } from 'vprinter-react-component';
+import 'vprinter-react-component/styles.css';
 
 <VirtualPrinter content={`<C><BOLD>Order #029</BOLD></C>\n1 x Burger       9.99\n<B>Total          9.99</B>`} initiallyPrinted />
 ```
+
+The package builds its ESM and CommonJS entry points during installation, so
+GitHub installs work with the normal React bundlers as well as Node-based
+tooling. The packaged build keeps CSS as an explicit side-effect import so
+consumers can choose when to load the printer styles.
 
 Long receipts scroll by default. Set `scrollable={false}` when the full paper
 should remain visible and grow with its content:
@@ -120,6 +127,11 @@ Pass `logo` as an image URL or React node to replace the default mark used by
 `<LOGO>`. Long fixed-width report rows keep their spacing and can be scrolled
 inside the paper on narrow screens.
 
+`SUPPORTED_PRINTER_TAGS` is exported when an integration needs to validate a
+payload before displaying it. The component remains a visual preview: `<CUT>`
+and `<PLUGIN>` are shown as markers, and no network request or hardware action
+is made.
+
 The demo includes a `Real-world Tagesabrechnung` example transcribed from a
 completed restaurant day report, including canceled items, canceled orders,
 cash-book balances, and customer-card totals.
@@ -137,6 +149,12 @@ physical printer, open a cash drawer, play audio, or produce a scannable QR code
 | `logo` | Default mark | Image URL or React node for `<LOGO>` |
 | `initiallyPrinted` | `false` | Show a completed receipt on mount |
 | `scrollable` | `true` | Constrain long paper to a scrollable area, or show the full receipt |
+| `paperMaxHeight` | `60svh` | CSS height (or number of pixels) for scrollable paper |
+| `resetKey` | `undefined` | Change this value to return the printer to an empty ready state |
+| `onPhaseChange` | `undefined` | Called with `ready`, `printing`, `printed`, or `tearing` after a phase change |
+| `onPrintStart` | `undefined` | Called when paper starts feeding |
+| `onPrinted` | `undefined` | Called when paper finishes feeding |
+| `onTear` | `undefined` | Called after a tear-off returns the printer to ready |
 | `className` | `''` | Optional host styling hook |
 
 Multiple instances are independent. Treat receipt data as immutable. Updated
@@ -158,6 +176,19 @@ text for accessibility and readers that cannot scan inverted barcodes.
 Set `--vp-paper-height` on the component to change the scroll area height
 (default: `60svh`). The demo starts empty; consumers can still use
 `initiallyPrinted` to show paper immediately.
+
+`paperMaxHeight` is the JavaScript equivalent of that CSS variable. For a
+controlled reset, increment `resetKey` after changing the payload instead of
+remounting the component:
+
+```jsx
+<VirtualPrinter
+  content={invoice}
+  resetKey={invoiceVersion}
+  paperMaxHeight="24rem"
+  onPrinted={() => setLastPrint(Date.now())}
+/>
+```
 
 The CSS variables `--vp-ink`, `--vp-muted`, `--vp-paper`, and
 `--vp-feed-duration` can be overridden on the component. The default animation

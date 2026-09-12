@@ -5,10 +5,14 @@
   "repository": "github:enrzh/vprinter-react-component",
   "homepage": "https://enrzh.github.io/vprinter-react-component/",
   "type": "module",
-  "main": "./src/index.js",
-  "module": "./src/index.js",
+  "sideEffects": ["**/*.css"],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./src/index.d.ts",
   "files": [
+    "dist",
     "src/index.js",
+    "src/index.d.ts",
     "src/VirtualPrinter.jsx",
     "src/VirtualPrinter.css",
     "src/receipt.js",
@@ -18,15 +22,33 @@
     "package.json"
   ],
   "exports": {
-    ".": "./src/index.js",
-    "./styles.css": "./src/VirtualPrinter.css",
-    "./markup": "./src/printerMarkup.js",
-    "./ticket": "./src/simpleTicket.js"
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/vprinter-react-component.css",
+    "./markup": {
+      "types": "./src/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./ticket": {
+      "types": "./src/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
   },
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build --base=./",
+    "build:lib": "vite build --mode library",
+    "prepare": "vite build --mode library",
+    "test:package": "vite build --mode library && node scripts/check-package.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test src/receipt.test.js"
   },
