@@ -1,35 +1,36 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   color-scheme: light;
-  background: #f5f5f7;
+  background: #f7f8fa;
   color: #1d1d1f;
 }
 
 * { box-sizing: border-box; }
-body { min-width: 320px; margin: 0; background: #f5f5f7; }
+body { min-width: 320px; margin: 0; background: #f7f8fa; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
+::selection { background: #cfe4ff; color: #102b46; }
 
 .demo {
-  width: min(100%, 1160px);
+  width: min(100%, 1240px);
   min-height: 100svh;
   margin: 0 auto;
-  padding: 32px clamp(20px, 4vw, 56px) 64px;
+  padding: 28px clamp(20px, 4vw, 64px) 64px;
 }
-.demo-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 64px; }
+.demo-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 52px; }
 .demo-brand { display: inline-flex; align-items: center; gap: 10px; }
 .demo-brand > span:last-child { display: grid; gap: 2px; }
 .demo-brand strong { font-size: 14px; font-weight: 600; }
 .demo-brand small { color: #6e6e73; font-size: 11px; }
-.demo-brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid #d2d2d7; border-radius: 8px; background: #fff; color: #1d1d1f; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+.demo-brand-mark { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid #c9cdd3; border-radius: 9px; background: #fff; box-shadow: 0 1px 2px #1d1d1f0b; color: #1d1d1f; font-size: 10px; font-weight: 700; letter-spacing: .04em; }
 .demo-step-indicator { color: #6e6e73; font: 600 11px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; }
 .demo-step-indicator b { color: #1d1d1f; }
 
-.demo-workspace { display: grid; grid-template-columns: minmax(300px, .82fr) minmax(390px, 1.18fr); align-items: start; gap: clamp(42px, 7vw, 88px); }
-.demo-setup { min-width: 0; padding-top: 4px; }
+.demo-workspace { display: grid; grid-template-columns: minmax(340px, 430px) minmax(390px, 1fr); align-items: start; justify-content: center; gap: clamp(54px, 8vw, 112px); }
+.demo-setup { min-width: 0; max-width: 430px; padding-top: 4px; }
 .demo-overline { margin-bottom: 12px; color: #6e6e73; font: 600 11px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
-.demo-setup h1 { max-width: 440px; margin: 0 0 10px; color: #1d1d1f; font-size: 38px; line-height: 1.08; letter-spacing: 0; }
-.demo-lede { max-width: 440px; margin: 0 0 25px; color: #6e6e73; font-size: 15px; line-height: 1.5; }
+.demo-setup h1 { max-width: 440px; margin: 0 0 9px; color: #1d1d1f; font-size: 40px; line-height: 1.08; letter-spacing: 0; }
+.demo-lede { max-width: 440px; margin: 0 0 25px; color: #6e6e73; font-size: 15px; line-height: 1.45; }
 
 .demo-mode-grid { display: grid; gap: 8px; margin-bottom: 26px; }
 .demo-mode {
@@ -37,16 +38,19 @@ button { cursor: pointer; }
   width: 100%;
   min-height: 58px;
   align-items: center;
-  padding: 11px 14px;
+  gap: 11px;
+  padding: 11px 14px 11px 13px;
   border: 1px solid #d2d2d7;
-  border-radius: 8px;
+  border-radius: 9px;
   background: #fff;
   color: #1d1d1f;
   text-align: left;
-  transition: border-color 140ms, background 140ms;
+  transition: border-color 140ms, background 140ms, box-shadow 140ms;
 }
+.demo-mode::before { content: ''; width: 18px; height: 18px; flex: none; border: 1px solid #b5b7bd; border-radius: 50%; background: #fff; }
 .demo-mode:hover { border-color: #8e8e93; background: #fbfbfd; }
-.demo-mode.is-selected { border-color: #0071e3; background: #f0f7ff; }
+.demo-mode.is-selected { border-color: #0071e3; background: #f0f7ff; box-shadow: 0 0 0 1px #0071e3; }
+.demo-mode.is-selected::before { border-color: #0071e3; background: #0071e3; box-shadow: inset 0 0 0 4px #f0f7ff; }
 .demo-mode:focus-visible, .demo-next:focus-visible, .demo-back:focus-visible { outline: 2px solid #007aff; outline-offset: 3px; }
 .demo-mode > span { display: grid; gap: 4px; min-width: 0; }
 .demo-mode strong { font-size: 14px; font-weight: 600; }
@@ -57,22 +61,23 @@ button { cursor: pointer; }
 .demo-field { display: grid; gap: 7px; min-width: 0; color: #424245; font-size: 12px; }
 .demo-field > span { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; flex-wrap: wrap; }
 .demo-field small { min-width: 0; color: #6e6e73; font-size: 10px; font-weight: 400; overflow-wrap: anywhere; }
-.demo-field input, .demo-field select, .demo-field textarea { width: 100%; border: 1px solid #d2d2d7; border-radius: 6px; outline: none; background: #fff; color: #1d1d1f; }
+.demo-field input, .demo-field select, .demo-field textarea { width: 100%; border: 1px solid #cfd2d8; border-radius: 7px; outline: none; background: #fff; color: #1d1d1f; box-shadow: 0 1px 1px #1d1d1f08; }
 .demo-field input, .demo-field select { min-height: 40px; padding: 8px 10px; }
 .demo-field textarea { min-height: 96px; padding: 10px; resize: vertical; line-height: 1.45; }
 .demo-field input:focus, .demo-field select:focus, .demo-field textarea:focus { border-color: #007aff; box-shadow: 0 0 0 3px #007aff26; }
 .demo-code { font: 12px/1.5 "SFMono-Regular", Consolas, monospace; tab-size: 4; }
 .demo-custom-field textarea { min-height: 250px; }
-.demo-print-layout { display: grid; gap: 8px; margin: 0 0 24px; padding: 0; border: 0; color: #424245; font-size: 12px; }
-.demo-print-layout legend { margin-bottom: 2px; color: #424245; font-weight: 600; }
-.demo-print-layout label { display: flex; align-items: center; gap: 8px; }
+.demo-print-layout { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 24px; padding: 11px; border: 1px solid #d7d9de; border-radius: 9px; background: #fbfbfc; color: #424245; font-size: 12px; }
+.demo-print-layout legend { width: 100%; margin-bottom: 1px; color: #424245; font-weight: 600; }
+.demo-print-layout label { display: flex; min-height: 34px; align-items: center; gap: 7px; padding: 7px 9px; border: 1px solid #d7d9de; border-radius: 7px; background: #fff; }
+.demo-print-layout label:has(input:checked) { border-color: #0071e3; background: #f0f7ff; color: #003e7e; }
 .demo-print-layout input { accent-color: #0071e3; }
 
 .demo-next { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: space-between; padding: 12px 15px 12px 17px; border: 1px solid #0071e3; border-radius: 8px; background: #0071e3; color: #fff; font-weight: 600; }
 .demo-next:hover { background: #0077ed; }
 .demo-next svg, .demo-back svg { width: 18px; height: 18px; }
-.demo-preview { min-width: 0; }
-.demo-preview-header { display: flex; align-items: center; justify-content: space-between; min-height: 28px; margin: 2px 0 20px; color: #6e6e73; font: 600 11px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.demo-preview { display: flex; min-width: 0; flex-direction: column; align-items: center; position: sticky; top: 24px; }
+.demo-preview-header { display: flex; width: 100%; max-width: 600px; align-items: center; justify-content: space-between; min-height: 28px; margin: 2px 0 20px; color: #6e6e73; font: 600 11px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
 .demo-back { display: inline-flex; align-items: center; gap: 7px; padding: 4px 0; border: 0; background: transparent; color: #0071e3; font-size: 12px; letter-spacing: 0; text-transform: none; }
 .demo-back:hover { color: #005bb5; }
 .demo-share { display: none; width: 44px; height: 44px; place-items: center; border: 1px solid #d2d2d7; border-radius: 8px; background: #fff; color: #1d1d1f; }
@@ -85,6 +90,8 @@ button { cursor: pointer; }
   .demo { padding: 20px 14px 46px; }
   .demo-header { margin-bottom: 34px; }
   .demo-workspace { display: block; }
+  .demo-setup { max-width: none; }
+  .demo-preview { position: static; }
   .demo-workspace[data-step="setup"] .demo-preview { display: none; }
   .demo-workspace[data-step="preview"] .demo-setup { display: none; }
   .demo-preview-header { margin-bottom: 13px; }
@@ -96,6 +103,7 @@ button { cursor: pointer; }
 
 @media (max-width: 520px) {
   .demo-form-row { grid-template-columns: 1fr; }
+  .demo-print-layout label { flex: 1 1 145px; }
 }
 
 @media (min-width: 761px) {

@@ -131,7 +131,7 @@ function Demo() {
       <section className="demo-setup" aria-labelledby="setup-title">
         <div className="demo-overline">Input</div>
         <h1 id="setup-title">Choose a print format</h1>
-        <p className="demo-lede">Pick a quick ticket, raw FEIEYUN markup, or bring your own layout.</p>
+        <p className="demo-lede">Choose an input, then feed the paper.</p>
         <div className="demo-mode-grid" role="radiogroup" aria-label="Print format">
           {[
             ['quick', 'Quick ticket', 'Title, items and total'],
