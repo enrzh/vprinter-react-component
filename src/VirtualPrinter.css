@@ -85,6 +85,7 @@
 .vp--front .vp-housing::after { left: 50%; width: 52px; transform: translateX(-50%); }
 .vp--front .vp-slot { border-top-color: #777a80; box-shadow: 0 -3px 0 #121214, 0 -4px 0 #ffffff16, inset 0 1px 2px #000, 0 3px 5px #0009; }
 .vp--front .vp-paper-window { filter: drop-shadow(0 6px 8px #0002); }
+.vp--front .vp-paper-scroll { user-select: none; -webkit-user-select: none; }
 .vp-status {
   position: absolute;
   z-index: 3;
