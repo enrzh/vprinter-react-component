@@ -150,7 +150,7 @@ physical printer, open a cash drawer, play audio, or produce a scannable QR code
 | `logo` | Default mark | Image URL or React node for `<LOGO>` |
 | `initiallyPrinted` | `false` | Show a completed receipt on mount |
 | `scrollable` | `true` | Constrain long paper to a scrollable area, or show the full receipt |
-| `orientation` | `'front'` | Use `'up'` for a desktop printer that feeds paper upward |
+| `orientation` | `'front'` | Use `'up'` for the N80-inspired tabletop printer that feeds paper upward |
 | `paperMaxHeight` | `60svh` | CSS height (or number of pixels) for scrollable paper |
 | `resetKey` | `undefined` | Change this value to return the printer to an empty ready state |
 | `onPhaseChange` | `undefined` | Called with `ready`, `printing`, `printed`, or `tearing` after a phase change |
