@@ -120,6 +120,7 @@ export function VirtualPrinter({
   const nextId = useRef(0);
   const printButton = useRef(null);
   const paperScroll = useRef(null);
+  const drag = useRef(null);
   const previousResetKey = useRef(resetKey);
   const previousPhase = useRef(initiallyPrinted ? 'printed' : 'ready');
   const [job, setJob] = useState(() => ({
@@ -156,7 +157,27 @@ export function VirtualPrinter({
   }, [resetKey]);
 
   function finishTear() {
+    paperScroll.current?.style.removeProperty('--vp-drag-x');
+    paperScroll.current?.style.removeProperty('--vp-drag-y');
     setJob(current => current.phase === 'tearing' ? { ...current, phase: 'ready' } : current);
+  }
+
+  function startTear() {
+    setJob(current => current.phase === 'printed' ? { ...current, phase: 'tearing' } : current);
+  }
+
+  function releasePaper(event, cancelled = false) {
+    const gesture = drag.current;
+    if (!gesture || gesture.id !== event.pointerId) return;
+    drag.current = null;
+    const paper = event.currentTarget;
+    paper.closest('.vp')?.removeAttribute('data-dragging');
+    if (!cancelled && gesture.distance >= 65) {
+      startTear();
+    } else {
+      paper.style.removeProperty('--vp-drag-x');
+      paper.style.removeProperty('--vp-drag-y');
+    }
   }
 
   useEffect(() => {
@@ -173,7 +194,7 @@ export function VirtualPrinter({
     const onMotionChange = () => { if (motion.matches) finishTear(); };
     onMotionChange();
     motion.addEventListener('change', onMotionChange);
-    const timer = window.setTimeout(finishTear, 550);
+    const timer = window.setTimeout(finishTear, 750);
     return () => { window.clearTimeout(timer); motion.removeEventListener('change', onMotionChange); };
   }, [tearing]);
 
@@ -214,7 +235,7 @@ export function VirtualPrinter({
         <span className="vp-sr-only">{printing ? 'Printing receipt' : 'Print receipt'}</span>
       </button>
 
-      {(job.phase === 'printed' || tearing) && <button className="vp-tear" type="button" aria-label="Tear off receipt" title="Tear off receipt" disabled={tearing} onClick={() => setJob(current => current.phase === 'printed' ? { ...current, phase: 'tearing' } : current)}>
+      {(job.phase === 'printed' || tearing) && <button className="vp-tear" type="button" aria-label="Tear off receipt" title="Tear off receipt" disabled={tearing} onClick={startTear}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8 8 12 12M8 16 20 4" /></svg>
       </button>}
       <div className="vp-status" role="status" aria-live="polite" aria-atomic="true" id={statusId}>
@@ -227,6 +248,22 @@ export function VirtualPrinter({
       <div className="vp-slot" aria-hidden="true" />
       <div className="vp-paper-window" aria-busy={printing}>
         <div ref={paperScroll} className="vp-paper-scroll" role="region" aria-label="Receipt paper" tabIndex={job.phase === 'printed' ? 0 : undefined}
+          onPointerDown={event => {
+            if (job.phase !== 'printed' || (event.pointerType !== 'mouse' && !event.target.closest('.vp-paper-grip'))) return;
+            drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, distance: 0 };
+            event.currentTarget.setPointerCapture(event.pointerId);
+            event.currentTarget.closest('.vp')?.setAttribute('data-dragging', 'true');
+          }}
+          onPointerMove={event => {
+            const gesture = drag.current;
+            if (!gesture || gesture.id !== event.pointerId) return;
+            const distance = Math.max(0, (orientation === 'up' ? -1 : 1) * (event.clientY - gesture.y));
+            gesture.distance = distance;
+            event.currentTarget.style.setProperty('--vp-drag-y', `${(orientation === 'up' ? -1 : 1) * Math.min(distance, 140)}px`);
+            event.currentTarget.style.setProperty('--vp-drag-x', `${Math.max(-24, Math.min(24, (event.clientX - gesture.x) * .3))}px`);
+          }}
+          onPointerUp={releasePaper}
+          onPointerCancel={event => releasePaper(event, true)}
           onKeyDown={event => {
             if (event.target !== event.currentTarget || job.phase !== 'printed') return;
             const paper = event.currentTarget;
@@ -238,6 +275,7 @@ export function VirtualPrinter({
           onAnimationEnd={event => { if (['vp-tear', 'vp-tear-up'].includes(event.animationName) && event.target === event.currentTarget) finishTear(); }}>
         <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : isTicket ? 'vp-paper--ticket' : ''}`} aria-labelledby={isMarkup || isTicket ? undefined : headingId} aria-label={isMarkup || isTicket ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}
           onAnimationEnd={event => { if (['vp-feed', 'vp-feed-up'].includes(event.animationName) && event.target === event.currentTarget) finishPrint(); }}>
+          <span className="vp-paper-grip" aria-hidden="true" />
           {isMarkup ? <MarkupPaper content={job.content} logo={logo} /> : isTicket ? <TicketPaper ticket={job.ticket} /> : <>
             <header className="vp-merchant">
               <h2 id={headingId}>{data.merchant.name}</h2>
