@@ -166,12 +166,14 @@ function Demo() {
             <label><input type="radio" name="printer-style" checked={orientation === 'front'} onChange={() => setOrientation('front')} /><span>Front feed</span></label>
             <label><input type="radio" name="printer-style" checked={orientation === 'up'} onChange={() => setOrientation('up')} /><span>Tabletop</span></label>
           </fieldset>
-          <label className="demo-scroll-toggle"><input type="checkbox" checked={scrollable} onChange={event => setScrollable(event.target.checked)} /><span>Scrollable paper</span></label>
           <button type="button" className="demo-share" aria-label={sharing ? 'Preparing image' : 'Share receipt image'} title="Share receipt image" disabled={sharing} onClick={shareReceipt}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M6 10H4v11h16V10h-2" /></svg>
           </button>
         </div>
         <VirtualPrinter resetKey={previewId} {...printerProps} />
+        <div className="demo-printer-options">
+          <label className="demo-scroll-toggle"><input type="checkbox" checked={scrollable} onChange={event => setScrollable(event.target.checked)} /><span className="demo-switch" aria-hidden="true" /><span>Scrollable paper</span></label>
+        </div>
         {shareError && <p role="alert">{shareError}</p>}
       </section>
     </div>

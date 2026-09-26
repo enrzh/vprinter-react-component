@@ -8,10 +8,11 @@ page background or add a card around itself.
 The demo starts with an input step and a printer preview step. On small screens
 these are two focused screens; on larger screens they sit side by side. Choose a
 quick ticket, edit a FEIEYUN payload, or write a custom layout, then open the
-preview. Switch between front-feed and tabletop styles in the preview, and
-toggle the paper height there. Each preview opens with an empty printer. The
-print icon feeds the paper; drag the printed paper away from the slot or use
-the scissors button to tear it off and leave the printer ready for another copy.
+preview. Switch between front-feed and tabletop styles in the preview; the
+scrollable-paper switch sits below the printer. Each preview opens with an empty
+printer. The print icon feeds the paper. Drag the printed paper away from the
+slot or use the scissors button to tear it off and leave the printer ready for
+another copy.
 Short pulls snap back. Long receipts scroll with a mouse wheel or keyboard;
 front-feed paper also supports touch scrolling, while upward-feed paper uses
 touch dragging to tear. These icon buttons have accessible labels.

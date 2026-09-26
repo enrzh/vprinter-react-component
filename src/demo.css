@@ -80,9 +80,14 @@ button { cursor: pointer; }
 .demo-style-switch label { position: relative; display: grid; min-width: 104px; min-height: 38px; place-items: center; padding: 6px 10px; border-radius: 5px; color: #4f5359; font-size: 12px; font-weight: 600; cursor: pointer; }
 .demo-style-switch label:has(input:checked) { background: #fff; color: #005bb5; box-shadow: 0 1px 3px #0002; }
 .demo-style-switch label:focus-within { outline: 2px solid #007aff; outline-offset: 1px; }
-.demo-scroll-toggle { display: inline-flex; min-height: 38px; align-items: center; gap: 8px; color: #4f5359; font-size: 12px; cursor: pointer; }
-.demo-scroll-toggle input { width: 16px; height: 16px; margin: 0; accent-color: #087455; }
-.demo-scroll-toggle input:focus-visible { outline: 2px solid #007aff; outline-offset: 3px; }
+.demo-printer-options { display: flex; width: 100%; max-width: 600px; justify-content: center; margin-top: 16px; }
+.demo-scroll-toggle { position: relative; display: inline-flex; min-height: 38px; align-items: center; gap: 9px; color: #4f5359; font-size: 12px; cursor: pointer; }
+.demo-scroll-toggle input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.demo-switch { position: relative; width: 36px; height: 20px; flex: none; border-radius: 10px; background: #bfc4ca; transition: background 150ms; }
+.demo-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px #0003; transition: transform 150ms; }
+.demo-scroll-toggle:has(input:checked) .demo-switch { background: #087455; }
+.demo-scroll-toggle:has(input:checked) .demo-switch::after { transform: translateX(16px); }
+.demo-scroll-toggle:focus-within .demo-switch { outline: 2px solid #007aff; outline-offset: 3px; }
 
 @media (max-width: 1060px) {
   .demo { padding: 17px 14px 42px; }
@@ -96,8 +101,7 @@ button { cursor: pointer; }
   .demo-back { grid-column: 1; }
   .demo-preview-header strong { grid-column: 2; font-size: 15px; }
   .demo-share { grid-column: 3; grid-row: 1; justify-self: end; }
-  .demo-style-switch { grid-column: 1 / 3; grid-row: 2; }
-  .demo-scroll-toggle { grid-column: 3; grid-row: 2; justify-self: end; }
+  .demo-style-switch { grid-column: 1 / -1; grid-row: 2; }
   .demo-style-switch label { flex: 1 1 0; min-width: 0; }
   .demo-next { margin-top: 2px; }
   .vp { width: 100%; }

@@ -130,9 +130,14 @@ export function VirtualPrinter({
   }));
   const printing = job.phase === 'printing';
   const tearing = job.phase === 'tearing';
-  const data = job.receipt;
-  const isMarkup = job.content !== null;
-  const isTicket = !isMarkup && job.ticket !== null;
+  const source = job.phase === 'ready' ? {
+    receipt: hasContent || hasTicket ? null : receipt,
+    content: hasContent ? content : null,
+    ticket: hasTicket && !hasContent ? ticket : null,
+  } : job;
+  const data = source.receipt;
+  const isMarkup = source.content !== null;
+  const isTicket = !isMarkup && source.ticket !== null;
   const isScrollable = scrollable !== false;
   const totals = isMarkup || isTicket ? null : calculateTotals(data.items, data.taxBasisPoints);
   const money = isMarkup || isTicket ? null : moneyFormatter(data.locale, data.currency);
@@ -294,7 +299,7 @@ export function VirtualPrinter({
         <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : isTicket ? 'vp-paper--ticket' : ''}`} aria-labelledby={isMarkup || isTicket ? undefined : headingId} aria-label={isMarkup || isTicket ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}
           onAnimationEnd={event => { if (['vp-feed', 'vp-feed-up'].includes(event.animationName) && event.target === event.currentTarget) finishPrint(); }}>
           <span className="vp-paper-grip" aria-hidden="true" />
-          {isMarkup ? <MarkupPaper content={job.content} logo={logo} /> : isTicket ? <TicketPaper ticket={job.ticket} /> : <>
+          {isMarkup ? <MarkupPaper content={source.content} logo={logo} /> : isTicket ? <TicketPaper ticket={source.ticket} /> : <>
             <header className="vp-merchant">
               <h2 id={headingId}>{data.merchant.name}</h2>
               <address>{data.merchant.address.map((line, i) => <span key={i}>{line}</span>)}
