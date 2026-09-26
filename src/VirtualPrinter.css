@@ -166,7 +166,7 @@
 .vp-paper-grip { position: absolute; z-index: 2; top: 9px; left: 50%; width: 76px; height: 28px; transform: translateX(-50%); cursor: grab; touch-action: none; }
 .vp-paper-grip::after { content: ''; position: absolute; top: 11px; left: 22px; width: 32px; height: 4px; border-radius: 2px; background: #8e8e935c; }
 .vp[data-dragging="true"] .vp-paper-grip { cursor: grabbing; }
-.vp-paper::after { content: ''; position: absolute; top: calc(100% - 1px); left: 0; right: 0; height: 8px; background: linear-gradient(135deg, var(--vp-paper) 5px, transparent 0) 0 0 / 14px 8px repeat-x, linear-gradient(225deg, var(--vp-paper) 5px, transparent 0) 0 0 / 14px 8px repeat-x; }
+.vp-paper::after { content: ''; position: absolute; top: calc(100% - 1px); left: 0; right: 0; height: 5px; background: linear-gradient(135deg, var(--vp-paper) 3px, transparent 0) 0 0 / 6px 5px repeat-x, linear-gradient(225deg, var(--vp-paper) 3px, transparent 0) 0 0 / 6px 5px repeat-x; }
 .vp[data-phase="ready"] .vp-paper { visibility: hidden; }
 .vp[data-phase="printing"] .vp-paper { animation: vp-feed var(--vp-feed-duration) cubic-bezier(.22,.62,.28,1) both; }
 .vp-merchant { text-align: center; padding-bottom: 28px; }
@@ -238,7 +238,8 @@
 .vp--up .vp-tear { left: 46%; right: auto; }
 .vp--up .vp-status { top: auto; bottom: 16cqw; left: 20%; min-height: 44px; padding: 11px 0; }
 .vp--up .vp-status::after { content: none; }
-.vp--up .vp-paper-window { position: absolute; bottom: 72cqw; left: 20%; width: 42%; height: min(var(--vp-paper-height, 60svh), 340px); margin: 0; padding-bottom: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+.vp--up .vp-paper-window { position: absolute; bottom: calc(72cqw + 12px); left: 20%; width: 42%; height: min(var(--vp-paper-height, 60svh), 340px); margin: 0; padding-bottom: 5px; display: flex; flex-direction: column; justify-content: flex-end; }
+.vp--up[data-phase="printed"] .vp-paper-window::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 5px; pointer-events: none; background: linear-gradient(135deg, var(--vp-paper) 3px, transparent 0) 0 0 / 6px 5px repeat-x, linear-gradient(225deg, var(--vp-paper) 3px, transparent 0) 0 0 / 6px 5px repeat-x; }
 .vp--up[data-phase="ready"] .vp-paper-window { display: none; }
 .vp--up .vp-paper-scroll { max-height: 100%; padding-bottom: 0; transform-origin: bottom left; scrollbar-width: none; }
 .vp--up .vp-paper-scroll::-webkit-scrollbar { display: none; }
