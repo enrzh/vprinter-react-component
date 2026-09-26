@@ -53,7 +53,8 @@
     "test": "node --test src/receipt.test.js"
   },
   "dependencies": {
-    "jsbarcode": "3.12.3"
+    "jsbarcode": "3.12.3",
+    "three": "0.186.1"
   },
   "peerDependencies": {
     "react": ">=18.0.0"

@@ -3,6 +3,7 @@ import JsBarcode from 'jsbarcode';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { parsePrinterMarkup } from './printerMarkup.js';
 import { normalizeTicket } from './simpleTicket.js';
+import { TabletopPrinter } from './TabletopPrinter.jsx';
 import './VirtualPrinter.css';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
@@ -229,7 +230,7 @@ export function VirtualPrinter({
   };
   return <section className={`vp vp--${orientation} ${className}`} data-phase={job.phase} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label={`${orientation === 'up' ? 'Upward' : 'Front-feed'} virtual receipt printer`}>
     <div className="vp-machine">
-      <div className="vp-housing" aria-hidden="true" />
+      <div className="vp-housing" aria-hidden="true">{orientation === 'up' && <TabletopPrinter phase={job.phase} />}</div>
       <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
         <PrinterIcon />
         <span className="vp-sr-only">{printing ? 'Printing receipt' : 'Print receipt'}</span>

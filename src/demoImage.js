@@ -8,6 +8,13 @@ export async function createPrinterImage(printer) {
   clone.inert = true;
   clone.removeAttribute('id');
   clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+  const sourceCanvases = printer.querySelectorAll('canvas');
+  clone.querySelectorAll('canvas').forEach((target, index) => {
+    const source = sourceCanvases[index];
+    target.width = source.width;
+    target.height = source.height;
+    target.getContext('2d').drawImage(source, 0, 0);
+  });
   Object.assign(clone.style, {
     position: 'fixed', left: '-20000px', top: '0', margin: '0',
     width: `${printer.getBoundingClientRect().width + extraWidth + 2}px`, maxWidth: 'none',

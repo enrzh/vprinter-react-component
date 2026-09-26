@@ -71,8 +71,9 @@ should remain visible and grow with its content:
 React is a peer dependency, so the app's existing React runtime is reused.
 
 For a source-copy integration, copy `src/VirtualPrinter.jsx`,
-`src/VirtualPrinter.css`, `src/receipt.js`, `src/simpleTicket.js`,
-and `src/printerMarkup.js` into a React app and install `jsbarcode`.
+`src/TabletopPrinter.jsx`, `src/VirtualPrinter.css`, `src/receipt.js`,
+`src/simpleTicket.js`, and `src/printerMarkup.js` into a React app and install
+`jsbarcode` and `three`.
 The component imports its scoped CSS. The demo files, including `demoImage.js`,
 are not needed to use the component.
 
@@ -150,7 +151,7 @@ physical printer, open a cash drawer, play audio, or produce a scannable QR code
 | `logo` | Default mark | Image URL or React node for `<LOGO>` |
 | `initiallyPrinted` | `false` | Show a completed receipt on mount |
 | `scrollable` | `true` | Constrain long paper to a scrollable area, or show the full receipt |
-| `orientation` | `'front'` | Use `'up'` for the N80-inspired tabletop printer that feeds paper upward |
+| `orientation` | `'front'` | Use `'up'` for the Three.js tabletop printer modeled after the N80 silhouette |
 | `paperMaxHeight` | `60svh` | CSS height (or number of pixels) for scrollable paper |
 | `resetKey` | `undefined` | Change this value to return the printer to an empty ready state |
 | `onPhaseChange` | `undefined` | Called with `ready`, `printing`, `printed`, or `tearing` after a phase change |

@@ -228,7 +228,8 @@
 
 .vp--up .vp-machine { width: min(100%, 420px); padding: min(var(--vp-paper-height, 60svh), 340px) 0 0; container-type: inline-size; }
 .vp--up .vp-machine::after { content: ''; display: block; width: 100%; aspect-ratio: 1; }
-.vp--up .vp-housing { inset: auto 0 0; height: auto; aspect-ratio: 1; border: 0; border-radius: 0; background: url('./assets/n80-inspired.avif') center / contain no-repeat; box-shadow: none; }
+.vp--up .vp-housing { inset: auto 0 0; height: auto; aspect-ratio: 1; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.vp-model-canvas { display: block; width: 100%; height: 100%; filter: drop-shadow(0 15px 11px #0004); }
 .vp--up .vp-housing::before, .vp--up .vp-housing::after { content: none; }
 .vp--up .vp-slot { top: auto; bottom: 72cqw; left: 20%; right: auto; width: 42%; height: 7px; border-top: 2px solid #151719; border-radius: 2px; background: linear-gradient(#050506, #303235); box-shadow: 0 2px 2px #0008; }
 .vp--up .vp-slot::after { content: none; }

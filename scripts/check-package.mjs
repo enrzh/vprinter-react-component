@@ -24,6 +24,10 @@ const markup = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
 assert.match(markup, /data-phase="printed"/);
 assert.match(markup, /data-scrollable="false"/);
 assert.match(markup, /--vp-paper-height:320px/);
+const tabletop = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
+  content: '<B>Smoke test</B>', orientation: 'up', initiallyPrinted: true,
+}));
+assert.match(tabletop, /vp-model-canvas/);
 assert.throws(() => esm.VirtualPrinter({}), /exactly one/);
 assert.throws(() => esm.VirtualPrinter({ content: 'x', ticket: {} }), /exactly one/);
 assert.throws(() => esm.VirtualPrinter({ content: 42 }), /content must be a string/);
