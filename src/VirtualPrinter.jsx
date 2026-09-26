@@ -231,14 +231,16 @@ export function VirtualPrinter({
   return <section className={`vp vp--${orientation} ${className}`} data-phase={job.phase} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label={`${orientation === 'up' ? 'Upward' : 'Front-feed'} virtual receipt printer`}>
     <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true">{orientation === 'up' && <TabletopPrinter phase={job.phase} />}</div>
-      <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
-        <PrinterIcon />
-        <span className="vp-sr-only">{printing ? 'Printing receipt' : 'Print receipt'}</span>
-      </button>
+      <div className="vp-controls" role="group" aria-label="Printer controls">
+        <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
+          <PrinterIcon />
+          <span className="vp-sr-only">{printing ? 'Printing receipt' : 'Print receipt'}</span>
+        </button>
 
-      {(job.phase === 'printed' || tearing) && <button className="vp-tear" type="button" aria-label="Tear off receipt" title="Tear off receipt" disabled={tearing} onClick={startTear}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8 8 12 12M8 16 20 4" /></svg>
-      </button>}
+        {(job.phase === 'printed' || tearing) && <button className="vp-tear" type="button" aria-label="Tear off receipt" title="Tear off receipt" disabled={tearing} onClick={startTear}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8 8 12 12M8 16 20 4" /></svg>
+        </button>}
+      </div>
       <div className="vp-status" role="status" aria-live="polite" aria-atomic="true" id={statusId}>
         <span className={`vp-status-icon ${printing ? 'vp-status-icon--printing' : ''}`} aria-hidden="true" title={statusText}>
           {printing ? <span className="vp-spinner" /> : job.phase === 'printed' ?
@@ -250,7 +252,7 @@ export function VirtualPrinter({
       <div className="vp-paper-window" aria-busy={printing}>
         <div ref={paperScroll} className="vp-paper-scroll" role="region" aria-label="Receipt paper" tabIndex={job.phase === 'printed' ? 0 : undefined}
           onPointerDown={event => {
-            if (job.phase !== 'printed' || (event.pointerType !== 'mouse' && !event.target.closest('.vp-paper-grip'))) return;
+            if (job.phase !== 'printed' || (orientation !== 'up' && event.pointerType !== 'mouse' && !event.target.closest('.vp-paper-grip'))) return;
             drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, distance: 0 };
             event.currentTarget.setPointerCapture(event.pointerId);
             event.currentTarget.closest('.vp')?.setAttribute('data-dragging', 'true');

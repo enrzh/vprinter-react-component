@@ -11,8 +11,9 @@ quick ticket, edit a FEIEYUN payload, or write a custom layout, then open the
 preview. Each preview opens with an empty printer. The white printer icon on
 the casing feeds the paper; drag the printed paper away from the slot or use
 the scissors button to tear it off and leave the printer ready for another copy.
-Short pulls snap back. Long receipts scroll beneath the casing using
-touch, a mouse wheel, or the keyboard. These icon buttons have accessible labels.
+Short pulls snap back. Long receipts scroll with a mouse wheel or keyboard;
+front-feed paper also supports touch scrolling, while upward-feed paper uses
+touch dragging to tear. These icon buttons have accessible labels.
 The demo's share icon exports the printer and the entire receipt as a transparent PNG,
 including all rows and fixed-width columns. Supported devices open the native
 share sheet; other browsers download `receipt.png`. External logos must allow

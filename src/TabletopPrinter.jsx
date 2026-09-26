@@ -16,7 +16,7 @@ export function TabletopPrinter({ phase }) {
     renderer.toneMappingExposure = 1.4;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-2.7, 2.7, 2.7, -2.7, .1, 50);
+    const camera = new THREE.OrthographicCamera(-2.2, 2.2, 2.2, -2.2, .1, 50);
     camera.position.set(0, 2.8, 7.6);
     camera.lookAt(0, .03, 0);
     scene.add(new THREE.HemisphereLight(0xdfe7ee, 0x0b0c10, 3));

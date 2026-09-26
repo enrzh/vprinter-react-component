@@ -23,6 +23,16 @@ export async function createPrinterImage(printer) {
   document.body.append(clone);
   try {
     const scroll = clone.querySelector('.vp-paper-scroll');
+    if (clone.classList.contains('vp--up')) {
+      const sourceScroll = printer.querySelector('.vp-paper-scroll');
+      const extraHeight = Math.max(0, sourceScroll.scrollHeight - sourceScroll.clientHeight);
+      if (extraHeight) {
+        const machine = clone.querySelector('.vp-machine');
+        const window = clone.querySelector('.vp-paper-window');
+        machine.style.paddingTop = `${parseFloat(getComputedStyle(machine).paddingTop) + extraHeight}px`;
+        window.style.height = `${window.getBoundingClientRect().height + extraHeight}px`;
+      }
+    }
     Object.assign(scroll.style, { maxHeight: 'none', overflow: 'visible' });
     // Expand fixed-width reports so the PNG includes every column as well.
     const markup = clone.querySelector('.vp-markup-content');
