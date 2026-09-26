@@ -102,6 +102,28 @@ function Demo() {
     if (next) setMarkupContent(next.input);
   }
 
+  function followTabletopPrinter() {
+    let frame;
+    const stop = () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('touchstart', stop);
+      window.removeEventListener('keydown', stop);
+    };
+    const follow = () => {
+      const printer = preview.current?.querySelector('.vp--up[data-scrollable="false"]');
+      if (!printer) return stop();
+      const bottom = printer.querySelector('.vp-housing').getBoundingClientRect().bottom;
+      if (bottom > window.innerHeight - 24 || window.scrollY > 0) window.scrollBy(0, bottom - window.innerHeight + 24);
+      if (printer.dataset.phase === 'printing') frame = requestAnimationFrame(follow);
+      else stop();
+    };
+    window.addEventListener('wheel', stop, { passive: true });
+    window.addEventListener('touchstart', stop, { passive: true });
+    window.addEventListener('keydown', stop);
+    frame = requestAnimationFrame(follow);
+  }
+
   const printerProps = mode === 'quick' ? { ticket: quickTicket } : { content: mode === 'custom' ? customContent : markupContent };
   printerProps.scrollable = scrollable;
   printerProps.orientation = orientation;
@@ -174,7 +196,10 @@ function Demo() {
             <label><input type="radio" name="printer-style" checked={orientation === 'up'} onChange={() => setOrientation('up')} /><span>Tabletop</span></label>
           </fieldset>
           <div className="demo-header-actions">
-            {orientation === 'up' && <button type="button" className="demo-header-print" aria-label="Print receipt" title="Print receipt" disabled={printerPhase === 'printing' || printerPhase === 'tearing'} onClick={() => preview.current?.querySelector('.vp-print')?.click()}>Print</button>}
+            {orientation === 'up' && <button type="button" className="demo-header-print" aria-label="Print receipt" title="Print receipt" disabled={printerPhase === 'printing' || printerPhase === 'tearing'} onClick={() => {
+              preview.current?.querySelector('.vp-print')?.click();
+              if (!scrollable) followTabletopPrinter();
+            }}>Print</button>}
             {orientation === 'up' && (printerPhase === 'printed' || printerPhase === 'tearing') && <button type="button" className="demo-header-cut" aria-label="Tear off receipt" title="Tear off receipt" disabled={printerPhase === 'tearing'} onClick={() => preview.current?.querySelector('.vp-tear')?.click()}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8 8 12 12M8 16 20 4" /></svg>
             </button>}

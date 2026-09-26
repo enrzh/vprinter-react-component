@@ -160,7 +160,7 @@ export function VirtualPrinter({
     previousResetKey.current = resetKey;
     drag.current = null;
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
-    for (const property of ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate']) {
+    for (const property of ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate', '--vp-tear-x', '--vp-tear-y', '--vp-tear-rotate']) {
       paperScroll.current?.style.removeProperty(property);
     }
     paperScroll.current?.parentElement?.style.removeProperty('--vp-pull');
@@ -168,12 +168,23 @@ export function VirtualPrinter({
     setJob(current => ({ ...current, id: 0, phase: 'ready' }));
   }, [resetKey]);
 
+  useIsomorphicLayoutEffect(() => {
+    if (orientation !== 'up' || isScrollable || !printing) return;
+    const paper = paperScroll.current;
+    const updateHeight = () => paper.closest('.vp')?.style.setProperty('--vp-full-paper-height', `${paper.scrollHeight}px`);
+    updateHeight();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(paper);
+    return () => observer.disconnect();
+  }, [orientation, isScrollable, printing, job.id]);
+
   function finishTear() {
     drag.current = null;
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
-    paperScroll.current?.style.removeProperty('--vp-drag-x');
-    paperScroll.current?.style.removeProperty('--vp-drag-y');
-    paperScroll.current?.style.removeProperty('--vp-drag-rotate');
+    for (const property of ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate', '--vp-tear-x', '--vp-tear-y', '--vp-tear-rotate']) {
+      paperScroll.current?.style.removeProperty(property);
+    }
     paperScroll.current?.parentElement?.style.removeProperty('--vp-pull');
     setJob(current => current.phase === 'tearing' ? { ...current, phase: 'ready' } : current);
   }
@@ -186,14 +197,19 @@ export function VirtualPrinter({
     const gesture = drag.current;
     if (!gesture || gesture.id !== event.pointerId) return 0;
     const direction = orientation === 'up' ? -1 : 1;
-    const distance = Math.max(0, direction * (event.clientY - gesture.y));
     const sideways = event.clientX - gesture.x;
-    const pull = Math.min(distance, event.currentTarget.clientHeight + 120);
+    const vertical = event.clientY - gesture.y;
+    if (orientation === 'up' && !gesture.axis && Math.max(Math.abs(sideways), Math.abs(vertical)) >= 10) {
+      gesture.axis = Math.abs(sideways) > Math.abs(vertical) ? 'horizontal' : 'vertical';
+    }
+    const horizontal = orientation === 'up' && gesture.axis === 'horizontal';
+    const distance = Math.max(0, direction * vertical);
+    const pull = horizontal ? 0 : Math.min(distance, event.currentTarget.clientHeight + 120);
     event.currentTarget.style.setProperty('--vp-drag-y', `${direction * pull}px`);
     if (orientation === 'up') event.currentTarget.parentElement.style.setProperty('--vp-pull', `${pull}px`);
-    event.currentTarget.style.setProperty('--vp-drag-x', `${orientation === 'up' ? 0 : Math.max(-40, Math.min(40, sideways * .35))}px`);
-    event.currentTarget.style.setProperty('--vp-drag-rotate', `${orientation === 'up' ? 0 : Math.max(-4, Math.min(4, sideways * .04))}deg`);
-    return distance;
+    event.currentTarget.style.setProperty('--vp-drag-x', `${horizontal ? Math.max(-event.currentTarget.clientWidth - 120, Math.min(event.currentTarget.clientWidth + 120, sideways)) : orientation === 'up' ? 0 : Math.max(-40, Math.min(40, sideways * .35))}px`);
+    event.currentTarget.style.setProperty('--vp-drag-rotate', `${horizontal ? Math.max(-8, Math.min(8, sideways * .06)) : orientation === 'up' ? 0 : Math.max(-4, Math.min(4, sideways * .04))}deg`);
+    return horizontal ? Math.abs(sideways) : distance;
   }
 
   function releasePaper(event, cancelled = false) {
@@ -203,7 +219,14 @@ export function VirtualPrinter({
     drag.current = null;
     const paper = event.currentTarget;
     paper.closest('.vp')?.removeAttribute('data-dragging');
-    if (!cancelled && distance >= (orientation === 'up' ? 56 : 28)) {
+    const horizontal = orientation === 'up' && gesture.axis === 'horizontal';
+    if (!cancelled && distance >= (horizontal ? Math.min(100, Math.max(56, paper.clientWidth * .38)) : orientation === 'up' ? 56 : 28)) {
+      if (horizontal) {
+        const side = Math.sign(event.clientX - gesture.x);
+        paper.style.setProperty('--vp-tear-x', `${side * 260}px`);
+        paper.style.setProperty('--vp-tear-y', '-80px');
+        paper.style.setProperty('--vp-tear-rotate', `${side * 9}deg`);
+      }
       startTear();
     } else {
       paper.style.removeProperty('--vp-drag-x');
@@ -281,7 +304,8 @@ export function VirtualPrinter({
         <span className="vp-sr-only">{statusText}</span>
       </div>
       <div className="vp-slot" aria-hidden="true" />
-      <div className="vp-paper-window" aria-busy={printing}>
+      <div className="vp-paper-window" aria-busy={printing}
+        onAnimationEnd={event => { if (event.animationName === 'vp-reveal' && event.target === event.currentTarget) finishPrint(); }}>
         <div ref={paperScroll} className="vp-paper-scroll" role="region" aria-label="Receipt paper" tabIndex={job.phase === 'printed' ? 0 : undefined}
           onPointerDown={event => {
             if (drag.current || !event.isPrimary || job.phase !== 'printed' || (orientation !== 'up' && event.pointerType !== 'mouse' && !event.target.closest('.vp-paper-grip'))) return;
