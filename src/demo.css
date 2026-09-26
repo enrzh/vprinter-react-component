@@ -12,7 +12,7 @@ button { cursor: pointer; }
 ::selection { background: #cfe4ff; color: #102b46; }
 
 .demo {
-  width: min(100%, 1240px);
+  width: 100%;
   min-height: 100svh;
   margin: 0 auto;
   padding: 28px clamp(20px, 4vw, 64px) 64px;
@@ -26,7 +26,7 @@ button { cursor: pointer; }
 .demo-step-indicator { color: #6e6e73; font: 600 11px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; }
 .demo-step-indicator b { color: #1d1d1f; }
 
-.demo-workspace { display: grid; grid-template-columns: minmax(340px, 430px) minmax(390px, 1fr); align-items: start; justify-content: center; gap: clamp(54px, 8vw, 112px); }
+.demo-workspace { display: grid; grid-template-columns: minmax(340px, 430px) minmax(390px, 1fr); align-items: start; gap: clamp(32px, 4vw, 80px); }
 .demo-setup { min-width: 0; max-width: 430px; padding-top: 4px; }
 .demo-overline { margin-bottom: 12px; color: #6e6e73; font: 600 11px/1 "SFMono-Regular", Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; }
 .demo-setup h1 { max-width: 440px; margin: 0 0 9px; color: #1d1d1f; font-size: 40px; line-height: 1.08; letter-spacing: 0; }

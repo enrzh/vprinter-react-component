@@ -96,6 +96,7 @@ export function VirtualPrinter({
   ticket,
   logo,
   initiallyPrinted = false,
+  orientation = 'front',
   scrollable = true,
   paperMaxHeight,
   resetKey,
@@ -113,6 +114,7 @@ export function VirtualPrinter({
   }
   if (hasContent && typeof content !== 'string') throw new TypeError('content must be a string.');
   if (hasReceipt && (typeof receipt !== 'object' || Array.isArray(receipt))) throw new TypeError('receipt must be an object.');
+  if (orientation !== 'front' && orientation !== 'up') throw new TypeError('orientation must be "front" or "up".');
   const headingId = useId();
   const statusId = useId();
   const nextId = useRef(0);
@@ -204,7 +206,7 @@ export function VirtualPrinter({
   const paperStyle = paperMaxHeight == null ? undefined : {
     '--vp-paper-height': typeof paperMaxHeight === 'number' ? `${paperMaxHeight}px` : String(paperMaxHeight),
   };
-  return <section className={`vp ${className}`} data-phase={job.phase} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label="Virtual receipt printer">
+  return <section className={`vp vp--${orientation} ${className}`} data-phase={job.phase} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label={`${orientation === 'up' ? 'Upward' : 'Front-feed'} virtual receipt printer`}>
     <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true" />
       <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
@@ -233,9 +235,9 @@ export function VirtualPrinter({
             event.preventDefault();
             paper.scrollTop += offsets[event.key];
           }}
-          onAnimationEnd={event => { if (event.animationName === 'vp-tear' && event.target === event.currentTarget) finishTear(); }}>
+          onAnimationEnd={event => { if (['vp-tear', 'vp-tear-up'].includes(event.animationName) && event.target === event.currentTarget) finishTear(); }}>
         <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : isTicket ? 'vp-paper--ticket' : ''}`} aria-labelledby={isMarkup || isTicket ? undefined : headingId} aria-label={isMarkup || isTicket ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}
-          onAnimationEnd={event => { if (event.animationName === 'vp-feed' && event.target === event.currentTarget) finishPrint(); }}>
+          onAnimationEnd={event => { if (['vp-feed', 'vp-feed-up'].includes(event.animationName) && event.target === event.currentTarget) finishPrint(); }}>
           {isMarkup ? <MarkupPaper content={job.content} logo={logo} /> : isTicket ? <TicketPaper ticket={job.ticket} /> : <>
             <header className="vp-merchant">
               <h2 id={headingId}>{data.merchant.name}</h2>

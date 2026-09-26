@@ -64,6 +64,7 @@ function Demo() {
   const [step, setStep] = useState('setup');
   const [previewId, setPreviewId] = useState(0);
   const [scrollable, setScrollable] = useState(true);
+  const [orientation, setOrientation] = useState('front');
   const preview = useRef(null);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState('');
@@ -101,6 +102,7 @@ function Demo() {
 
   const printerProps = mode === 'quick' ? { ticket: quickTicket } : { content: mode === 'custom' ? customContent : markupContent };
   printerProps.scrollable = scrollable;
+  printerProps.orientation = orientation;
 
   async function shareReceipt() {
     const printer = preview.current?.querySelector('.vp');
@@ -153,6 +155,12 @@ function Demo() {
           <legend>Receipt height</legend>
           <label><input type="radio" name="receipt-height" checked={scrollable} onChange={() => setScrollable(true)} /> Scroll long receipts</label>
           <label><input type="radio" name="receipt-height" checked={!scrollable} onChange={() => setScrollable(false)} /> Show full receipt</label>
+        </fieldset>
+
+        <fieldset className="demo-print-layout">
+          <legend>Printer type</legend>
+          <label><input type="radio" name="printer-type" checked={orientation === 'front'} onChange={() => setOrientation('front')} /> Front feed</label>
+          <label><input type="radio" name="printer-type" checked={orientation === 'up'} onChange={() => setOrientation('up')} /> Upward feed</label>
         </fieldset>
 
         <button type="button" className="demo-next" onClick={() => { setPreviewId(id => id + 1); setShareError(''); setStep('preview'); }}>

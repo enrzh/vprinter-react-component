@@ -65,6 +65,7 @@ export interface VirtualPrinterProps {
   ticket?: TicketData;
   logo?: ReactNode;
   initiallyPrinted?: boolean;
+  orientation?: 'front' | 'up';
   scrollable?: boolean;
   paperMaxHeight?: string | number;
   resetKey?: string | number;
