@@ -159,8 +159,11 @@ function Demo() {
 
       <section ref={preview} className="demo-preview" aria-label="Printer preview">
         <div className="demo-preview-header">
-          <button type="button" className="demo-back" onClick={() => setStep('setup')}><ArrowIcon direction="left" /><span>Edit input</span></button>
-          <strong>Printer</strong>
+          <button type="button" className="demo-back" aria-label="Edit input" onClick={() => setStep('setup')}><ArrowIcon direction="left" /><span>Edit input</span></button>
+          <div className="demo-preview-title">
+            <strong>Printer</strong>
+            <label className="demo-scroll-toggle" title="Scrollable paper"><input type="checkbox" aria-label="Scrollable paper" checked={scrollable} onChange={event => setScrollable(event.target.checked)} /><span className="demo-switch" aria-hidden="true" /><span>Scroll</span></label>
+          </div>
           <fieldset className="demo-style-switch">
             <legend className="demo-sr-only">Printer style</legend>
             <label><input type="radio" name="printer-style" checked={orientation === 'front'} onChange={() => setOrientation('front')} /><span>Front feed</span></label>
@@ -171,9 +174,6 @@ function Demo() {
           </button>
         </div>
         <VirtualPrinter resetKey={previewId} {...printerProps} />
-        <div className="demo-printer-options">
-          <label className="demo-scroll-toggle"><input type="checkbox" checked={scrollable} onChange={event => setScrollable(event.target.checked)} /><span className="demo-switch" aria-hidden="true" /><span>Scrollable paper</span></label>
-        </div>
         {shareError && <p role="alert">{shareError}</p>}
       </section>
     </div>
