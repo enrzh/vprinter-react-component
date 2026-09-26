@@ -80,6 +80,11 @@
   border-radius: 3px;
   background: repeating-linear-gradient(90deg, #111113 0 3px, #ffffff0c 3px 4px, transparent 4px 8px);
 }
+.vp--front .vp-housing { background: linear-gradient(165deg, #414349 0%, #292b2f 42%, #1d1f23 100%); box-shadow: inset 0 1px 0 #ffffff45, inset 0 -7px 10px #0007, 0 3px 0 #151517, 0 17px 24px -14px #0009; }
+.vp--front .vp-housing::before { background: linear-gradient(160deg, #ffffff10, transparent 48%, #0003); box-shadow: inset 0 1px 0 #ffffff1c, 0 1px 0 #ffffff12; }
+.vp--front .vp-housing::after { left: 50%; width: 52px; transform: translateX(-50%); }
+.vp--front .vp-slot { border-top-color: #777a80; box-shadow: 0 -3px 0 #121214, 0 -4px 0 #ffffff16, inset 0 1px 2px #000, 0 3px 5px #0009; }
+.vp--front .vp-paper-window { filter: drop-shadow(0 6px 8px #0002); }
 .vp-status {
   position: absolute;
   z-index: 3;

@@ -28,7 +28,7 @@ function QuickForm({ draft, onChange }) {
       <input value={draft.subtitle} onChange={event => onChange('subtitle', event.target.value)} />
     </label>
     <label className="demo-field">
-      <span>Items <small>one per line, optional amount after |</small></span>
+      <span>Items</span>
       <textarea rows="5" value={draft.items} onChange={event => onChange('items', event.target.value)} />
     </label>
     <div className="demo-form-row">
@@ -53,7 +53,7 @@ function MarkupForm({ exampleId, content, onExampleChange, onContentChange }) {
       </select>
     </label>
     <label className="demo-field">
-      <span>FEIEYUN content <small>markup or plain text</small></span>
+      <span>FEIEYUN content</span>
       <textarea className="demo-code" rows="9" value={content} onChange={event => onContentChange(event.target.value)} />
     </label>
   </div>;
@@ -126,52 +126,47 @@ function Demo() {
         <span className="demo-brand-mark" aria-hidden="true">VP</span>
         <span><strong>Virtual Printer</strong><small>React component</small></span>
       </div>
-      <span className="demo-step-indicator"><b>{step === 'setup' ? '01' : '02'}</b> / 02</span>
+      <a className="demo-source" href="https://github.com/enrzh/vprinter-react-component" target="_blank" rel="noreferrer">Source ↗</a>
     </header>
 
     <div className="demo-workspace" data-step={step}>
       <section className="demo-setup" aria-labelledby="setup-title">
-        <div className="demo-overline">Input</div>
-        <h1 id="setup-title">Choose a print format</h1>
-        <p className="demo-lede">Choose an input, then feed the paper.</p>
-        <div className="demo-mode-grid" role="radiogroup" aria-label="Print format">
+        <div className="demo-overline">Content</div>
+        <h1 id="setup-title">Receipt</h1>
+        <fieldset className="demo-mode-grid">
+          <legend className="demo-sr-only">Print format</legend>
           {[
-            ['quick', 'Quick ticket', 'Title, items and total'],
-            ['markup', 'FEIEYUN markup', 'Use printer commands'],
-            ['custom', 'Custom layout', 'Write your own payload'],
-          ].map(([id, label, detail]) => <button type="button" role="radio" aria-label={label} aria-checked={mode === id} className={`demo-mode ${mode === id ? 'is-selected' : ''}`} onClick={() => setMode(id)} key={id}>
-            <span><strong>{label}</strong><small>{detail}</small></span>
-          </button>)}
-        </div>
+            ['quick', 'Quick ticket'],
+            ['markup', 'FEIEYUN'],
+            ['custom', 'Custom'],
+          ].map(([id, label]) => <label className="demo-mode" key={id}>
+            <input type="radio" name="print-format" checked={mode === id} onChange={() => setMode(id)} />
+            <span>{label}</span>
+          </label>)}
+        </fieldset>
 
         {mode === 'quick' ? <QuickForm draft={quickDraft} onChange={updateQuickDraft} />
           : mode === 'markup' ? <MarkupForm exampleId={exampleId} content={markupContent} onExampleChange={chooseExample} onContentChange={setMarkupContent} />
             : <label className="demo-field demo-custom-field">
-              <span>Custom content <small>Plain text and FEIEYUN tags are both accepted</small></span>
+              <span>Custom content</span>
               <textarea className="demo-code" rows="15" value={customContent} onChange={event => setCustomContent(event.target.value)} />
             </label>}
 
-        <fieldset className="demo-print-layout">
-          <legend>Receipt height</legend>
-          <label><input type="radio" name="receipt-height" checked={scrollable} onChange={() => setScrollable(true)} /> Scroll long receipts</label>
-          <label><input type="radio" name="receipt-height" checked={!scrollable} onChange={() => setScrollable(false)} /> Show full receipt</label>
-        </fieldset>
-
-        <fieldset className="demo-print-layout">
-          <legend>Printer type</legend>
-          <label><input type="radio" name="printer-type" checked={orientation === 'front'} onChange={() => setOrientation('front')} /> Front feed</label>
-          <label><input type="radio" name="printer-type" checked={orientation === 'up'} onChange={() => setOrientation('up')} /> Upward feed</label>
-        </fieldset>
-
         <button type="button" className="demo-next" onClick={() => { setPreviewId(id => id + 1); setShareError(''); setStep('preview'); }}>
-          <span>Open printer preview</span><ArrowIcon />
+          <span>Preview</span><ArrowIcon />
         </button>
       </section>
 
       <section ref={preview} className="demo-preview" aria-label="Printer preview">
         <div className="demo-preview-header">
           <button type="button" className="demo-back" onClick={() => setStep('setup')}><ArrowIcon direction="left" /><span>Edit input</span></button>
-          <span>Printer preview</span>
+          <strong>Printer</strong>
+          <fieldset className="demo-style-switch">
+            <legend className="demo-sr-only">Printer style</legend>
+            <label><input type="radio" name="printer-style" checked={orientation === 'front'} onChange={() => setOrientation('front')} /><span>Front feed</span></label>
+            <label><input type="radio" name="printer-style" checked={orientation === 'up'} onChange={() => setOrientation('up')} /><span>Tabletop</span></label>
+          </fieldset>
+          <label className="demo-scroll-toggle"><input type="checkbox" checked={scrollable} onChange={event => setScrollable(event.target.checked)} /><span>Scrollable paper</span></label>
           <button type="button" className="demo-share" aria-label={sharing ? 'Preparing image' : 'Share receipt image'} title="Share receipt image" disabled={sharing} onClick={shareReceipt}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M6 10H4v11h16V10h-2" /></svg>
           </button>
