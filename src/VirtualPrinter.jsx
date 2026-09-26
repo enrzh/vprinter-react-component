@@ -163,6 +163,7 @@ export function VirtualPrinter({
     for (const property of ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate']) {
       paperScroll.current?.style.removeProperty(property);
     }
+    paperScroll.current?.parentElement?.style.removeProperty('--vp-pull');
     nextId.current = 0;
     setJob(current => ({ ...current, id: 0, phase: 'ready' }));
   }, [resetKey]);
@@ -173,6 +174,7 @@ export function VirtualPrinter({
     paperScroll.current?.style.removeProperty('--vp-drag-x');
     paperScroll.current?.style.removeProperty('--vp-drag-y');
     paperScroll.current?.style.removeProperty('--vp-drag-rotate');
+    paperScroll.current?.parentElement?.style.removeProperty('--vp-pull');
     setJob(current => current.phase === 'tearing' ? { ...current, phase: 'ready' } : current);
   }
 
@@ -186,9 +188,11 @@ export function VirtualPrinter({
     const direction = orientation === 'up' ? -1 : 1;
     const distance = Math.max(0, direction * (event.clientY - gesture.y));
     const sideways = event.clientX - gesture.x;
-    event.currentTarget.style.setProperty('--vp-drag-y', `${direction * Math.min(distance, event.currentTarget.clientHeight + 120)}px`);
-    event.currentTarget.style.setProperty('--vp-drag-x', `${Math.max(-40, Math.min(40, sideways * .35))}px`);
-    event.currentTarget.style.setProperty('--vp-drag-rotate', `${Math.max(-4, Math.min(4, sideways * .04))}deg`);
+    const pull = Math.min(distance, event.currentTarget.clientHeight + 120);
+    event.currentTarget.style.setProperty('--vp-drag-y', `${direction * pull}px`);
+    if (orientation === 'up') event.currentTarget.parentElement.style.setProperty('--vp-pull', `${pull}px`);
+    event.currentTarget.style.setProperty('--vp-drag-x', `${orientation === 'up' ? 0 : Math.max(-40, Math.min(40, sideways * .35))}px`);
+    event.currentTarget.style.setProperty('--vp-drag-rotate', `${orientation === 'up' ? 0 : Math.max(-4, Math.min(4, sideways * .04))}deg`);
     return distance;
   }
 
@@ -199,12 +203,13 @@ export function VirtualPrinter({
     drag.current = null;
     const paper = event.currentTarget;
     paper.closest('.vp')?.removeAttribute('data-dragging');
-    if (!cancelled && distance >= 28) {
+    if (!cancelled && distance >= (orientation === 'up' ? 56 : 28)) {
       startTear();
     } else {
       paper.style.removeProperty('--vp-drag-x');
       paper.style.removeProperty('--vp-drag-y');
       paper.style.removeProperty('--vp-drag-rotate');
+      paper.parentElement.style.removeProperty('--vp-pull');
     }
   }
 

@@ -63,8 +63,10 @@ function Demo() {
   const [mode, setMode] = useState('quick');
   const [step, setStep] = useState('setup');
   const [previewId, setPreviewId] = useState(0);
-  const [scrollable, setScrollable] = useState(true);
+  const [printerPhase, setPrinterPhase] = useState('ready');
+  const [scrollableByStyle, setScrollableByStyle] = useState({ front: true, up: false });
   const [orientation, setOrientation] = useState('front');
+  const scrollable = scrollableByStyle[orientation];
   const preview = useRef(null);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState('');
@@ -103,6 +105,8 @@ function Demo() {
   const printerProps = mode === 'quick' ? { ticket: quickTicket } : { content: mode === 'custom' ? customContent : markupContent };
   printerProps.scrollable = scrollable;
   printerProps.orientation = orientation;
+  printerProps.onPhaseChange = setPrinterPhase;
+  printerProps.onTear = () => { if (orientation === 'up') requestAnimationFrame(() => preview.current?.querySelector('.demo-header-print')?.focus({ preventScroll: true })); };
 
   async function shareReceipt() {
     const printer = preview.current?.querySelector('.vp');
@@ -162,16 +166,22 @@ function Demo() {
           <button type="button" className="demo-back" aria-label="Edit input" onClick={() => setStep('setup')}><ArrowIcon direction="left" /><span>Edit input</span></button>
           <div className="demo-preview-title">
             <strong>Printer</strong>
-            <label className="demo-scroll-toggle" title="Scrollable paper"><input type="checkbox" aria-label="Scrollable paper" checked={scrollable} onChange={event => setScrollable(event.target.checked)} /><span className="demo-switch" aria-hidden="true" /><span>Scroll</span></label>
+            <label className="demo-scroll-toggle" title="Scrollable paper"><input type="checkbox" aria-label="Scrollable paper" checked={scrollable} onChange={event => setScrollableByStyle(current => ({ ...current, [orientation]: event.target.checked }))} /><span className="demo-switch" aria-hidden="true" /><span>Scroll</span></label>
           </div>
           <fieldset className="demo-style-switch">
             <legend className="demo-sr-only">Printer style</legend>
             <label><input type="radio" name="printer-style" checked={orientation === 'front'} onChange={() => setOrientation('front')} /><span>Front feed</span></label>
             <label><input type="radio" name="printer-style" checked={orientation === 'up'} onChange={() => setOrientation('up')} /><span>Tabletop</span></label>
           </fieldset>
-          <button type="button" className="demo-share" aria-label={sharing ? 'Preparing image' : 'Share receipt image'} title="Share receipt image" disabled={sharing} onClick={shareReceipt}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M6 10H4v11h16V10h-2" /></svg>
-          </button>
+          <div className="demo-header-actions">
+            {orientation === 'up' && <button type="button" className="demo-header-print" aria-label="Print receipt" title="Print receipt" disabled={printerPhase === 'printing' || printerPhase === 'tearing'} onClick={() => preview.current?.querySelector('.vp-print')?.click()}>Print</button>}
+            {orientation === 'up' && (printerPhase === 'printed' || printerPhase === 'tearing') && <button type="button" className="demo-header-cut" aria-label="Tear off receipt" title="Tear off receipt" disabled={printerPhase === 'tearing'} onClick={() => preview.current?.querySelector('.vp-tear')?.click()}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8 8 12 12M8 16 20 4" /></svg>
+            </button>}
+            <button type="button" className="demo-share" aria-label={sharing ? 'Preparing image' : 'Share receipt image'} title="Share receipt image" disabled={sharing} onClick={shareReceipt}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M6 10H4v11h16V10h-2" /></svg>
+            </button>
+          </div>
         </div>
         <VirtualPrinter resetKey={previewId} {...printerProps} />
         {shareError && <p role="alert">{shareError}</p>}

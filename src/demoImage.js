@@ -8,6 +8,7 @@ export async function createPrinterImage(printer) {
   clone.inert = true;
   clone.removeAttribute('id');
   clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+  clone.querySelector('.vp-controls')?.remove();
   const sourceCanvases = printer.querySelectorAll('canvas');
   clone.querySelectorAll('canvas').forEach((target, index) => {
     const source = sourceCanvases[index];
@@ -20,10 +21,18 @@ export async function createPrinterImage(printer) {
     width: `${printer.getBoundingClientRect().width + extraWidth + 2}px`, maxWidth: 'none',
     pointerEvents: 'none',
   });
-  document.body.append(clone);
+  const tabletop = clone.classList.contains('vp--up');
+  const capture = tabletop ? document.createElement('div') : clone;
+  if (tabletop) {
+    Object.assign(capture.style, { position: 'fixed', left: '-20000px', top: '0', width: 'max-content', padding: '20px', background: '#f7f8fa' });
+    Object.assign(clone.style, { position: 'static', left: 'auto', top: 'auto' });
+    clone.querySelector('.vp-machine').style.marginBottom = '0';
+    capture.append(clone);
+  }
+  document.body.append(capture);
   try {
     const scroll = clone.querySelector('.vp-paper-scroll');
-    if (clone.classList.contains('vp--up')) {
+    if (tabletop) {
       const sourceScroll = printer.querySelector('.vp-paper-scroll');
       const extraHeight = Math.max(0, sourceScroll.scrollHeight - sourceScroll.clientHeight);
       if (extraHeight) {
@@ -41,16 +50,19 @@ export async function createPrinterImage(printer) {
       clone.style.width = `${clone.getBoundingClientRect().width + extra}px`;
       markup.style.overflow = 'visible';
     }
-    clone.querySelectorAll('button').forEach(button => { button.disabled = false; });
-    const bounds = clone.getBoundingClientRect();
-    const blob = await toBlob(clone, {
+    if (tabletop) {
+      const paperTop = clone.querySelector('.vp-paper').getBoundingClientRect().top;
+      clone.style.marginTop = `${-Math.max(0, Math.floor(paperTop - clone.getBoundingClientRect().top - 16))}px`;
+    }
+    const bounds = capture.getBoundingClientRect();
+    const blob = await toBlob(capture, {
       pixelRatio: 2, skipFonts: true, width: Math.ceil(bounds.width), height: Math.ceil(bounds.height),
       style: { position: 'static', left: 'auto', top: 'auto' },
     });
     if (!blob) throw new Error('Could not create the receipt image.');
     return new File([blob], 'receipt.png', { type: 'image/png' });
   } finally {
-    clone.remove();
+    capture.remove();
   }
 }
 
