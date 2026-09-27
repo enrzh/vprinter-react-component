@@ -5,6 +5,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 export function TabletopPrinter({ phase }) {
   const canvas = useRef(null);
   const phaseRef = useRef(phase);
+  const animation = useRef(null);
   phaseRef.current = phase;
 
   useEffect(() => {
@@ -77,25 +78,28 @@ export function TabletopPrinter({ phase }) {
       }
     }
 
-    const resize = () => {
-      const size = element.clientWidth;
-      renderer.setSize(size, size, false);
-      camera.updateProjectionMatrix();
-    };
-    const observer = new ResizeObserver(resize);
-    observer.observe(element);
-    resize();
     const clock = new THREE.Clock();
-    renderer.setAnimationLoop(() => {
+    const render = () => {
       const printing = phaseRef.current === 'printing';
       light.emissive.setHex(printing ? 0xe6a44d : 0x18a764);
       light.emissiveIntensity = printing ? 1.2 + Math.sin(clock.getElapsedTime() * 9) * .7 : 1.2;
       renderer.render(scene, camera);
-    });
+    };
+    const resize = () => {
+      const size = element.clientWidth;
+      renderer.setSize(size, size, false);
+      camera.updateProjectionMatrix();
+      render();
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(element);
+    animation.current = { renderer, render };
+    resize();
 
     return () => {
       renderer.setAnimationLoop(null);
       observer.disconnect();
+      animation.current = null;
       const geometries = new Set();
       const materials = new Set();
       scene.traverse(object => {
@@ -109,6 +113,17 @@ export function TabletopPrinter({ phase }) {
       renderer.dispose();
     };
   }, []);
+
+  useEffect(() => {
+    const current = animation.current;
+    if (!current) return;
+    if (phase === 'printing') current.renderer.setAnimationLoop(current.render);
+    else {
+      current.renderer.setAnimationLoop(null);
+      current.render();
+    }
+    return () => current.renderer.setAnimationLoop(null);
+  }, [phase]);
 
   return <canvas ref={canvas} className="vp-model-canvas" aria-hidden="true" />;
 }
