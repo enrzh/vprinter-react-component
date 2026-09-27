@@ -17,7 +17,8 @@ paper upward or swipe it sideways to tear on Tabletop, or use the scissors
 button to leave the printer ready for another copy.
 Printing a full-length tabletop receipt scrolls the page to keep the printer
 visible.
-Short pulls snap back. Long receipts scroll with a mouse wheel or keyboard;
+Short pulls snap back; far pulls tear without waiting for release.
+Long receipts scroll with a mouse wheel or keyboard;
 front-feed paper also supports touch scrolling, while upward-feed paper uses
 touch dragging to tear. These icon buttons have accessible labels.
 The demo's share icon exports the printer and the entire receipt without controls,
