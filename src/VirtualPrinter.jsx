@@ -177,12 +177,16 @@ export function VirtualPrinter({
     const updateHeight = () => {
       const printer = paper.closest('.vp');
       if (orientation === 'up') printer?.style.setProperty('--vp-full-paper-height', `${paper.scrollHeight}px`);
-      else printer?.style.setProperty('--vp-feed-visible-height', `${paper.getBoundingClientRect().height}px`);
+      else {
+        printer?.style.setProperty('--vp-full-paper-height', `${paper.querySelector('.vp-paper').offsetHeight}px`);
+        printer?.style.setProperty('--vp-feed-visible-height', `${paper.getBoundingClientRect().height}px`);
+      }
     };
     updateHeight();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(updateHeight);
     observer.observe(paper);
+    if (orientation === 'front') observer.observe(paper.querySelector('.vp-paper'));
     return () => observer.disconnect();
   }, [orientation, isScrollable, printing, job.id]);
 
