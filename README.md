@@ -13,8 +13,9 @@ scrollable-paper switch sits beside the Printer title. Each preview opens with
 an empty printer. Front feed prints from its casing; Tabletop prints from the
 preview header, with Cut beside it after printing. Tabletop shows the full
 receipt by default; turn on Scroll to constrain long paper. Drag the printed
-paper upward or swipe it sideways to tear on Tabletop, or use the scissors
-button to leave the printer ready for another copy.
+paper upward or swipe it sideways to tear on Tabletop; swipe Front-feed paper
+sideways, pull its top edge downward, or use the scissors button to leave the
+printer ready for another copy.
 Printing a full-length tabletop receipt scrolls the page to keep the printer
 visible.
 Short pulls snap back; far pulls tear without waiting for release.

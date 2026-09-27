@@ -50,7 +50,7 @@
     "prepare": "vite build --mode library",
     "test:package": "vite build --mode library && node scripts/check-package.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test src/receipt.test.js"
+    "test": "node --test src/*.test.js"
   },
   "dependencies": {
     "jsbarcode": "3.12.3",

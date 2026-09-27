@@ -4,6 +4,7 @@ import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { parsePrinterMarkup } from './printerMarkup.js';
 import { normalizeTicket } from './simpleTicket.js';
 import { TabletopPrinter } from './TabletopPrinter.jsx';
+import { tearAxis } from './tearGesture.js';
 import './VirtualPrinter.css';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
@@ -160,6 +161,7 @@ export function VirtualPrinter({
     previousResetKey.current = resetKey;
     drag.current = null;
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
+    paperScroll.current?.removeAttribute('data-tear-axis');
     for (const property of ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate', '--vp-tear-x', '--vp-tear-y', '--vp-tear-rotate']) {
       paperScroll.current?.style.removeProperty(property);
     }
@@ -187,6 +189,7 @@ export function VirtualPrinter({
   function finishTear() {
     drag.current = null;
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
+    paperScroll.current?.removeAttribute('data-tear-axis');
     for (const property of ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate', '--vp-tear-x', '--vp-tear-y', '--vp-tear-rotate']) {
       paperScroll.current?.style.removeProperty(property);
     }
@@ -205,12 +208,13 @@ export function VirtualPrinter({
     const direction = orientation === 'up' ? -1 : 1;
     const sideways = event.clientX - gesture.x;
     const vertical = event.clientY - gesture.y;
-    if (orientation === 'up' && !gesture.axis && Math.max(Math.abs(sideways), Math.abs(vertical)) >= 10) {
-      gesture.axis = Math.abs(sideways) > Math.abs(vertical) ? 'horizontal' : 'vertical';
-    }
-    const horizontal = orientation === 'up' && gesture.axis === 'horizontal';
+    if (!gesture.axis) gesture.axis = tearAxis(orientation, gesture.pointerType, gesture.grip, sideways, vertical);
+    if (!gesture.axis || gesture.axis === 'scroll') return 0;
+    event.currentTarget.closest('.vp')?.setAttribute('data-dragging', 'true');
+    const horizontal = gesture.axis === 'horizontal';
     const distance = Math.max(0, direction * vertical);
     const pull = horizontal ? 0 : distance;
+    gesture.sideways = sideways;
     event.currentTarget.style.setProperty('--vp-drag-y', `${direction * pull}px`);
     if (orientation === 'up') event.currentTarget.parentElement.style.setProperty('--vp-pull', `${pull}px`);
     event.currentTarget.style.setProperty('--vp-drag-x', `${horizontal ? sideways : orientation === 'up' ? 0 : Math.max(-40, Math.min(40, sideways * .35))}px`);
@@ -226,12 +230,20 @@ export function VirtualPrinter({
     drag.current = null;
     const paper = event.currentTarget;
     paper.closest('.vp')?.removeAttribute('data-dragging');
-    const horizontal = orientation === 'up' && gesture.axis === 'horizontal';
-    if (distance >= (horizontal ? Math.min(72, Math.max(36, paper.clientWidth * .28)) : orientation === 'up' ? 36 : 18)) {
+    if (gesture.axis === 'scroll') {
+      paper.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
+      return;
+    }
+    const horizontal = gesture.axis === 'horizontal';
+    const threshold = horizontal
+      ? (orientation === 'front' ? 30 : Math.min(72, Math.max(36, paper.clientWidth * .28)))
+      : (orientation === 'up' ? 36 : 18);
+    if (distance >= threshold) {
       if (horizontal) {
-        const side = Math.sign(event.clientX - gesture.x);
+        const side = Math.sign(gesture.sideways);
+        if (orientation === 'front') paper.dataset.tearAxis = 'horizontal';
         paper.style.setProperty('--vp-tear-x', `${side * 260}px`);
-        paper.style.setProperty('--vp-tear-y', '-80px');
+        paper.style.setProperty('--vp-tear-y', orientation === 'up' ? '-80px' : '35px');
         paper.style.setProperty('--vp-tear-rotate', `${side * 9}deg`);
       }
       startTear();
@@ -317,17 +329,18 @@ export function VirtualPrinter({
         onAnimationEnd={event => { if (['vp-reveal', 'vp-feed-front', 'vp-feed-up-window'].includes(event.animationName) && event.target === event.currentTarget) finishPrint(); }}>
         <div ref={paperScroll} className="vp-paper-scroll" role="region" aria-label="Receipt paper" tabIndex={job.phase === 'printed' ? 0 : undefined}
           onPointerDown={event => {
-            if (drag.current || !event.isPrimary || job.phase !== 'printed' || (orientation !== 'up' && event.pointerType !== 'mouse' && !event.target.closest('.vp-paper-grip'))) return;
-            drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: event.currentTarget.scrollTop };
+            if (drag.current || !event.isPrimary || job.phase !== 'printed') return;
+            drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: event.currentTarget.scrollTop, pointerType: event.pointerType, grip: !!event.target.closest('.vp-paper-grip') };
             if (orientation === 'front') event.currentTarget.querySelector('.vp-paper')?.style.setProperty('--vp-scroll-offset', `${-event.currentTarget.scrollTop}px`);
             event.currentTarget.setPointerCapture(event.pointerId);
-            event.currentTarget.closest('.vp')?.setAttribute('data-dragging', 'true');
           }}
           onPointerMove={event => {
             const distance = movePaper(event);
             if (!drag.current) return;
             const horizontal = drag.current.axis === 'horizontal';
-            const farPull = orientation === 'front' ? 96 : horizontal ? Math.max(110, event.currentTarget.clientWidth * .65) : Math.max(120, Math.min(180, event.currentTarget.clientHeight * .45));
+            const farPull = orientation === 'front' ? (horizontal ? 72 : 96)
+              : horizontal ? Math.max(110, event.currentTarget.clientWidth * .65)
+                : Math.max(120, Math.min(180, event.currentTarget.clientHeight * .45));
             if (distance >= farPull) {
               releasePaper(event);
               if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
@@ -343,7 +356,7 @@ export function VirtualPrinter({
             event.preventDefault();
             paper.scrollTop += offsets[event.key];
           }}
-          onAnimationEnd={event => { if (['vp-tear', 'vp-tear-up'].includes(event.animationName) && event.target === event.currentTarget) finishTear(); }}>
+          onAnimationEnd={event => { if (['vp-tear', 'vp-tear-up', 'vp-tear-side'].includes(event.animationName) && event.target === event.currentTarget) finishTear(); }}>
         <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : isTicket ? 'vp-paper--ticket' : ''}`} aria-labelledby={isMarkup || isTicket ? undefined : headingId} aria-label={isMarkup || isTicket ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}>
           <span className="vp-paper-grip" aria-hidden="true" />
           {isMarkup ? <MarkupPaper content={source.content} logo={logo} /> : isTicket ? <TicketPaper ticket={source.ticket} /> : <>

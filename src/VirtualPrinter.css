@@ -86,7 +86,7 @@
 .vp--front .vp-slot { border-top-color: #777a80; box-shadow: 0 -3px 0 #121214, 0 -4px 0 #ffffff16, inset 0 1px 2px #000, 0 3px 5px #0009; }
 .vp--front .vp-paper-window { filter: drop-shadow(0 6px 8px #0002); }
 .vp--front[data-phase="printing"] .vp-paper-window { overflow: hidden; animation: vp-feed-front var(--vp-feed-duration) linear both; }
-.vp--front .vp-paper-scroll { user-select: none; -webkit-user-select: none; }
+.vp--front .vp-paper-scroll { user-select: none; -webkit-user-select: none; touch-action: pan-y; }
 .vp--front[data-scrollable="true"][data-phase="printed"][data-dragging="true"] .vp-paper-scroll, .vp--front[data-phase="tearing"] .vp-paper-scroll { overflow: visible; }
 .vp--front[data-dragging="true"] .vp-paper-window, .vp--front[data-phase="tearing"] .vp-paper-window { clip-path: inset(0 -100vw -100vh -100vw); }
 .vp--front[data-dragging="true"] .vp-paper, .vp--front[data-phase="tearing"] .vp-paper { transform: translateY(var(--vp-scroll-offset, 0px)); }
@@ -162,7 +162,9 @@
 .vp[data-dragging="true"] .vp-paper-window { overflow: visible; }
 .vp[data-phase="tearing"] .vp-paper-window { overflow: visible; }
 .vp[data-phase="tearing"] .vp-paper-scroll { transition: none; animation: vp-tear 480ms cubic-bezier(.18,.78,.28,1) both; pointer-events: none; }
+.vp--front[data-phase="tearing"] .vp-paper-scroll[data-tear-axis="horizontal"] { animation-name: vp-tear-side; }
 @keyframes vp-tear { from { transform: translate(var(--vp-drag-x, 0px), var(--vp-drag-y, 0px)) rotate(var(--vp-drag-rotate, 0deg)); opacity: 1; } 30% { transform: translate(calc(var(--vp-drag-x, 0px) + 8px), calc(var(--vp-drag-y, 0px) + 36px)) rotate(calc(var(--vp-drag-rotate, 0deg) + 2deg)); opacity: 1; } to { transform: translate(calc(var(--vp-drag-x, 0px) + 48px), calc(var(--vp-drag-y, 0px) + 260px)) rotate(calc(var(--vp-drag-rotate, 0deg) + 11deg)); opacity: 0; } }
+@keyframes vp-tear-side { from { transform: translate(var(--vp-drag-x, 0px), var(--vp-drag-y, 0px)) rotate(var(--vp-drag-rotate, 0deg)); opacity: 1; } to { transform: translate(calc(var(--vp-drag-x, 0px) + var(--vp-tear-x)), calc(var(--vp-drag-y, 0px) + var(--vp-tear-y))) rotate(calc(var(--vp-drag-rotate, 0deg) + var(--vp-tear-rotate))); opacity: 0; } }
 .vp-paper {
   position: relative;
   margin: 0;
