@@ -328,8 +328,10 @@
 .vp--up .vp-print:hover:not(:disabled) { background: #fff; }
 .vp--up .vp-status { top: auto; bottom: 16cqw; left: 20%; min-height: 44px; padding: 11px 0; }
 .vp--up .vp-status::after { content: none; }
-/* Projected cutter center in TabletopPrinter's front camera: x 46.36%, y 24.06%. */
-.vp--up .vp-paper-window { --vp-up-cap: 320px; position: absolute; bottom: 75.94cqw; left: 18.86%; width: 55%; height: min(var(--vp-paper-height, 60svh), var(--vp-up-cap)); margin: 0; padding-bottom: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+/* The paper tucks into the projected front lip, centered at x 46.36%, y 25.5%. */
+.vp--up .vp-paper-window { --vp-up-cap: 320px; position: absolute; bottom: 74.5cqw; left: 18.86%; width: 55%; height: min(var(--vp-paper-height, 60svh), var(--vp-up-cap)); margin: 0; padding-bottom: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+.vp--up .vp-paper-window::before { content: ''; position: absolute; z-index: 4; inset: auto 0 0; height: clamp(4px, 1.6cqw, 8px); border-radius: 1px 1px 3px 3px; background: linear-gradient(#131619, #41464b 35%, #23282d 65%, #171a1d); box-shadow: 0 -2px 3px #00000024; pointer-events: none; }
+.vp--up[data-detached="true"] .vp-paper-window::before { content: none; }
 .vp--up[data-phase="ready"] .vp-paper-window { display: none; }
 .vp--up[data-scrollable="true"][data-phase="printing"] .vp-paper-window { justify-content: flex-start; overflow: hidden; height: min(calc(var(--vp-full-paper-height, 0px) * var(--vp-feed-progress)), var(--vp-paper-height, 60svh), var(--vp-up-cap)); }
 .vp--up[data-scrollable="true"][data-phase="printing"] .vp-paper { transform: translateY(calc(-1 * max(0px, var(--vp-full-paper-height, 0px) * var(--vp-feed-progress) - min(var(--vp-paper-height, 60svh), var(--vp-up-cap))))); }
@@ -340,9 +342,9 @@
 .vp--up[data-phase="printed"] .vp-markup-content::-webkit-scrollbar { display: none; }
 .vp--up[data-dragging="true"] .vp-paper-scroll { cursor: grabbing; }
 .vp--up[data-scrollable="false"] .vp-machine { padding-top: 0; }
-.vp--up[data-scrollable="false"][data-phase="ready"] .vp-machine { padding-top: 24.06cqw; }
-.vp--up[data-scrollable="false"][data-phase="printing"] .vp-machine { padding-top: calc(24.06cqw * (1 - var(--vp-feed-progress))); }
-.vp--up[data-scrollable="false"] .vp-paper-window { position: relative; bottom: auto; left: auto; display: block; width: 55%; height: auto; margin: 0 0 -24.06cqw 18.86%; overflow: visible; }
+.vp--up[data-scrollable="false"][data-phase="ready"] .vp-machine { padding-top: 25.5cqw; }
+.vp--up[data-scrollable="false"][data-phase="printing"] .vp-machine { padding-top: calc(25.5cqw * (1 - var(--vp-feed-progress))); }
+.vp--up[data-scrollable="false"] .vp-paper-window { position: relative; bottom: auto; left: auto; display: block; width: 55%; height: auto; margin: 0 0 -25.5cqw 18.86%; overflow: visible; }
 .vp--up[data-scrollable="false"][data-phase="ready"] .vp-paper-window { display: block; height: 0; overflow: hidden; visibility: hidden; }
 .vp--up[data-scrollable="false"][data-phase="printing"] .vp-paper-window { overflow: hidden; height: calc(var(--vp-full-paper-height, 0px) * var(--vp-feed-progress)); }
 .vp--up[data-scrollable="false"] .vp-paper-scroll { min-height: 0; max-height: none; }
