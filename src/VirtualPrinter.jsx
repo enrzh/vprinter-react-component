@@ -1,13 +1,14 @@
-import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import JsBarcode from 'jsbarcode';
+import { encode } from 'uqr';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { parsePrinterMarkup } from './printerMarkup.js';
 import { normalizeTicket } from './simpleTicket.js';
-import { TabletopPrinter } from './TabletopPrinter.jsx';
 import { tearAxis } from './tearGesture.js';
 import './VirtualPrinter.css';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+const PRINT_FALLBACK_MS = 3400;
 
 function PrinterIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -29,42 +30,70 @@ function Barcode({ value }) {
 
 function MarkupLogo({ logo }) {
   if (logo && typeof logo === 'string') return <img className="vp-markup-logo-image" src={logo} alt="" />;
-  return logo || <span className="vp-markup-logo-mark" aria-hidden="true">𝕏</span>;
+  return logo || <span className="vp-markup-logo-mark" aria-hidden="true" />;
+}
+
+function QrCode({ text }) {
+  const path = useMemo(() => {
+    try {
+      const qr = encode(text || ' ', { ecc: 'M', border: 2 });
+      const commands = [];
+      qr.data.forEach((row, y) => {
+        row.forEach((dark, x) => {
+          if (dark) commands.push(`M${x} ${y}h1v1h-1z`);
+        });
+      });
+      return { d: commands.join(''), size: qr.size };
+    } catch {
+      return null;
+    }
+  }, [text]);
+  if (!path) return <span className="vp-markup-qr-box" aria-hidden="true">QR</span>;
+  return <svg className="vp-markup-qr-svg" viewBox={`0 0 ${path.size} ${path.size}`} aria-hidden="true"><path d={path.d} /></svg>;
+}
+
+function MarkupText({ part }) {
+  const className = [part.bold && 'vp-markup-bold', part.right && 'vp-markup-part--right'].filter(Boolean).join(' ');
+  if (!part.doubleHeight && !part.doubleWidth) return <span className={className || undefined}>{part.text}</span>;
+  const columns = Array.from(part.text).length * (part.doubleWidth ? 2 : 1);
+  const sized = part.doubleHeight && part.doubleWidth ? 'vp-markup-double' : part.doubleHeight ? 'vp-markup-double-height' : 'vp-markup-double-width';
+  return <span className={`${sized} ${className}`.trim()} style={{ width: `${columns}ch` }}><span>{part.text}</span></span>;
 }
 
 function MarkupPart({ part, logo }) {
-  if (part.type === 'logo') {
-    return <span className="vp-markup-logo"><MarkupLogo logo={logo} /></span>;
-  }
+  if (part.type === 'logo') return <span className="vp-markup-logo"><MarkupLogo logo={logo} /></span>;
   if (part.type === 'qr') {
     return <span className={`vp-markup-qr ${part.center ? 'vp-markup-qr--center' : ''} ${part.right ? 'vp-markup-qr--right' : ''}`} role="img" aria-label={`QR code: ${part.text || 'empty'}`}>
-      <span className="vp-markup-qr-box" aria-hidden="true">QR</span>
+      <QrCode text={part.text} />
       <code className="vp-markup-qr-value">{part.text}</code>
     </span>;
   }
   if (part.type === 'control') {
-    return <span className={`vp-markup-control vp-markup-control--${part.control}`} role="img" aria-label={part.control === 'cut' ? 'Paper cut' : 'Printer plugin command'} aria-hidden="false" />;
+    return <span className={`vp-markup-control vp-markup-control--${part.control}`} role="img" aria-label={part.control === 'cut' ? 'Paper cut' : 'Printer plugin command'} />;
   }
-  const className = [
-    part.bold && 'vp-markup-bold',
-    part.doubleHeight && 'vp-markup-double-height',
-    part.doubleWidth && 'vp-markup-double-width',
-    part.right && 'vp-markup-part--right',
-  ].filter(Boolean).join(' ');
-  return <span className={className || undefined}>{part.text}</span>;
+  return <MarkupText part={part} />;
 }
 
 function MarkupPaper({ content, logo }) {
   const lines = parsePrinterMarkup(content);
   return <div className="vp-markup-content" role="document" aria-label="Printer document">
-    {lines.map((line, lineIndex) => {
-      const lineLength = line.parts.reduce((length, part) => length + (part.type === 'text' ? part.text.length : 0), 0);
-      const dense = lineLength > 38 && !line.parts.some(part => part.type === 'logo');
-      return <div className={`vp-markup-line ${line.center ? 'vp-markup-line--center' : ''} ${line.right ? 'vp-markup-line--right' : ''} ${dense ? 'vp-markup-line--dense' : ''}`} key={lineIndex}>
+    {lines.map((line, lineIndex) => <div className={`vp-markup-line ${line.center ? 'vp-markup-line--center' : ''} ${line.right ? 'vp-markup-line--right' : ''}`} key={lineIndex}>
       {line.parts.map((part, partIndex) => <MarkupPart part={part} logo={logo} key={partIndex} />)}
-      </div>;
-    })}
+    </div>)}
   </div>;
+}
+
+function useTabletopPrinter(enabled) {
+  const [Renderer, setRenderer] = useState(null);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    let active = true;
+    import('./TabletopPrinter.jsx').then(module => {
+      if (active) setRenderer(() => module.TabletopPrinter);
+    });
+    return () => { active = false; };
+  }, [enabled]);
+  return enabled ? Renderer : null;
 }
 
 function TicketPaper({ ticket }) {
@@ -140,9 +169,25 @@ export function VirtualPrinter({
   const isMarkup = source.content !== null;
   const isTicket = !isMarkup && source.ticket !== null;
   const isScrollable = scrollable !== false;
-  const totals = isMarkup || isTicket ? null : calculateTotals(data.items, data.taxBasisPoints);
-  const money = isMarkup || isTicket ? null : moneyFormatter(data.locale, data.currency);
-  const taxRate = isMarkup || isTicket ? null : new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100);
+  const Tabletop = useTabletopPrinter(orientation === 'up');
+  let receiptView = null;
+  if (!isMarkup && !isTicket) {
+    try {
+      if (!data?.merchant || !data.payment) throw new TypeError('Receipt is missing merchant or payment.');
+      if (typeof data.payment.authorization !== 'string' || data.payment.authorization.length === 0) {
+        throw new TypeError('Receipt authorization must be a nonempty string.');
+      }
+      receiptView = {
+        data,
+        totals: calculateTotals(data.items, data.taxBasisPoints),
+        money: moneyFormatter(data.locale, data.currency),
+        taxRate: new Intl.NumberFormat(data.locale, { maximumFractionDigits: 2 }).format(data.taxBasisPoints / 100),
+        issued: formatOrderDate(data.issuedAt, data.locale, data.timeZone),
+      };
+    } catch (error) {
+      receiptView = { error: error instanceof Error ? error.message : 'This receipt could not be printed.' };
+    }
+  }
   const statusText = printing ? 'Printing your receipt' : tearing ? 'Tearing off receipt' : job.phase === 'printed' ? 'Receipt printed' : 'Ready to print';
 
   useEffect(() => {
@@ -291,7 +336,7 @@ export function VirtualPrinter({
     onMotionChange();
     motion.addEventListener('change', onMotionChange);
     // A fallback for hidden tabs or consumers overriding the animation styles.
-    const timer = window.setTimeout(finishPrint, 3400);
+    const timer = window.setTimeout(finishPrint, PRINT_FALLBACK_MS);
     return () => {
       window.clearTimeout(timer);
       motion.removeEventListener('change', onMotionChange);
@@ -310,7 +355,7 @@ export function VirtualPrinter({
   };
   return <section className={`vp vp--${orientation} ${className}`} data-phase={job.phase} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label={`${orientation === 'up' ? 'Upward' : 'Front-feed'} virtual receipt printer`}>
     <div className="vp-machine">
-      <div className="vp-housing" aria-hidden="true">{orientation === 'up' && <TabletopPrinter phase={job.phase} />}</div>
+      <div className="vp-housing" aria-hidden="true">{Tabletop && <Tabletop phase={job.phase} />}</div>
       <div className="vp-controls" role="group" aria-label="Printer controls">
         <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
           <PrinterIcon />
@@ -363,37 +408,37 @@ export function VirtualPrinter({
           onAnimationEnd={event => { if (['vp-tear', 'vp-tear-up', 'vp-tear-side'].includes(event.animationName) && event.target === event.currentTarget) finishTear(); }}>
         <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : isTicket ? 'vp-paper--ticket' : ''}`} aria-labelledby={isMarkup || isTicket ? undefined : headingId} aria-label={isMarkup || isTicket ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}>
           <span className="vp-paper-grip" aria-hidden="true" />
-          {isMarkup ? <MarkupPaper content={source.content} logo={logo} /> : isTicket ? <TicketPaper ticket={source.ticket} /> : <>
+          {isMarkup ? <MarkupPaper content={source.content} logo={logo} /> : isTicket ? <TicketPaper ticket={source.ticket} /> : receiptView.error ? <p className="vp-receipt-error" role="alert">{receiptView.error}</p> : <>
             <header className="vp-merchant">
-              <h2 id={headingId}>{data.merchant.name}</h2>
-              <address>{data.merchant.address.map((line, i) => <span key={i}>{line}</span>)}
-                {data.merchant.phone && <span>Tel: {data.merchant.phone}</span>}
+              <h2 id={headingId}>{receiptView.data.merchant.name}</h2>
+              <address>{receiptView.data.merchant.address.map((line, i) => <span key={i}>{line}</span>)}
+                {receiptView.data.merchant.phone && <span>Tel: {receiptView.data.merchant.phone}</span>}
               </address>
             </header>
 
             <div className="vp-order">
-              <span>ORDER #{data.orderId}</span>
-              <time dateTime={data.issuedAt}>{formatOrderDate(data.issuedAt, data.locale, data.timeZone)}</time>
+              <span>ORDER #{receiptView.data.orderId}</span>
+              <time dateTime={receiptView.data.issuedAt}>{receiptView.issued}</time>
             </div>
             <table className="vp-items">
               <caption className="vp-sr-only">Order items</caption>
               <thead className="vp-sr-only"><tr><th scope="col">Item and quantity</th><th scope="col">Amount</th></tr></thead>
-              <tbody>{data.items.map(item => <tr key={item.id}>
+              <tbody>{receiptView.data.items.map((item, index) => <tr key={item.id ?? index}>
                 <th scope="row">{item.quantity}x {item.name}</th>
-                <td>{money(item.quantity * item.unitAmount)}</td>
+                <td>{receiptView.money(item.quantity * item.unitAmount)}</td>
               </tr>)}</tbody>
             </table>
 
             <dl className="vp-totals">
-              <div><dt>Subtotal</dt><dd>{money(totals.subtotal)}</dd></div>
-              <div><dt>Tax ({taxRate}%)</dt><dd>{money(totals.tax)}</dd></div>
-              <div className="vp-total"><dt>Total</dt><dd>{money(totals.total)}</dd></div>
+              <div><dt>Subtotal</dt><dd>{receiptView.money(receiptView.totals.subtotal)}</dd></div>
+              <div><dt>Tax ({receiptView.taxRate}%)</dt><dd>{receiptView.money(receiptView.totals.tax)}</dd></div>
+              <div className="vp-total"><dt>Total</dt><dd>{receiptView.money(receiptView.totals.total)}</dd></div>
             </dl>
             <footer className="vp-payment">
-              <p className="vp-paid">Paid via {data.payment.method}{data.payment.last4 && ` (•••• ${data.payment.last4})`}</p>
-              <Barcode value={data.payment.authorization} />
-              <p className="vp-authorization">AUTH: {data.payment.authorization}</p>
-              <p className="vp-thanks">{data.footer}</p>
+              <p className="vp-paid">Paid via {receiptView.data.payment.method}{receiptView.data.payment.last4 && ` (•••• ${receiptView.data.payment.last4})`}</p>
+              <Barcode value={receiptView.data.payment.authorization} />
+              <p className="vp-authorization">AUTH: {receiptView.data.payment.authorization}</p>
+              <p className="vp-thanks">{receiptView.data.footer}</p>
             </footer>
           </>}
         </article>

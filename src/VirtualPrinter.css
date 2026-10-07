@@ -5,6 +5,9 @@
   --vp-shell: #2c2c2e;
   --vp-shell-edge: #1d1d1f;
   --vp-feed-duration: 2800ms;
+  --vp-columns: 48;
+  --vp-markup-pad: 22px;
+  --vp-window-gutter: 49px;
   width: 100%;
   max-width: 600px;
   margin: 0;
@@ -147,9 +150,19 @@
   height: 2px;
   background: repeating-linear-gradient(90deg, #8b8b9066 0 1px, transparent 1px 3px);
 }
+.vp--front:has(.vp-paper--markup) {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  width: calc(var(--vp-columns) * 1ch + 2 * var(--vp-markup-pad) + 2 * var(--vp-window-gutter));
+  max-width: 100%;
+}
+.vp--front .vp-paper--markup {
+  width: calc(var(--vp-columns) * 1ch + 2 * var(--vp-markup-pad));
+  max-width: 100%;
+}
 .vp-paper-window {
   position: relative;
-  margin-inline: 49px;
+  margin-inline: var(--vp-window-gutter);
   overflow: hidden;
   overflow: clip;
   padding-bottom: 10px;
@@ -203,24 +216,51 @@
 .vp-barcode { display: block; width: 100%; height: 50px; border-radius: 8px; background: #171717; }
 .vp-authorization { margin: 8px 0 14px; font-size: 13px; letter-spacing: 1px; color: var(--vp-muted); }
 .vp-thanks { margin: 0; font-size: 15px; }
+.vp-receipt-error { margin: 0; color: var(--vp-muted); font: 14px/1.45 "SFMono-Regular", Consolas, monospace; white-space: pre-wrap; }
 .vp-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.vp-paper--markup { padding: 34px 22px 42px; font-size: 13px; line-height: 1.42; }
-.vp-markup-content { width: 100%; min-width: 0; overflow-x: auto; overflow-wrap: anywhere; white-space: pre-wrap; tab-size: 4; }
-.vp-markup-line { min-height: 1.42em; text-align: left; }
+.vp-paper--markup {
+  padding: 34px var(--vp-markup-pad) 42px;
+  font-size: 13px;
+  line-height: 1.42;
+  overflow-wrap: normal;
+}
+.vp-markup-content {
+  width: calc(var(--vp-columns) * 1ch);
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-wrap: normal;
+  white-space: pre;
+  tab-size: 4;
+}
+.vp-markup-line { min-height: 1.42em; width: max-content; min-width: 100%; overflow-wrap: normal; white-space: pre; text-align: left; }
 .vp-markup-line--center { text-align: center; }
 .vp-markup-line--right { text-align: right; }
-.vp-markup-line--dense { width: max-content; min-width: 100%; overflow-wrap: normal; white-space: pre; }
 .vp-markup-bold { font-weight: 700; }
-.vp-markup-double-height { display: inline-block; transform: scaleY(1.45); transform-origin: center bottom; margin-block: .2em; }
-.vp-markup-double-width { display: inline-block; transform: scaleX(1.45); transform-origin: left center; }
+.vp-markup-double,
+.vp-markup-double-height,
+.vp-markup-double-width { display: inline-block; position: relative; vertical-align: bottom; overflow: hidden; white-space: pre; line-height: 1.42; }
+.vp-markup-double,
+.vp-markup-double-height { height: 2.84em; }
+.vp-markup-double > span,
+.vp-markup-double-height > span,
+.vp-markup-double-width > span { display: block; width: max-content; transform-origin: left bottom; white-space: pre; }
+.vp-markup-double > span,
+.vp-markup-double-height > span { position: absolute; left: 0; bottom: 0; }
+.vp-markup-double > span { transform: scale(2); }
+.vp-markup-double-height > span { transform: scaleY(2); }
+.vp-markup-double-width > span { transform: scaleX(2); }
 .vp-markup-part--right { text-align: right; }
 .vp-markup-logo { display: flex; justify-content: center; min-height: 43px; margin-bottom: 8px; }
-.vp-markup-logo-mark { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 50%; background: #f2f2f7; color: #1d1d1f; font-family: Arial, Helvetica, sans-serif; font-size: 25px; font-weight: 700; }
+.vp-markup-logo-mark { display: grid; width: 43px; height: 43px; place-items: center; border-radius: 50%; background: #f2f2f7; }
+.vp-markup-logo-mark::before { content: ''; width: 18px; height: 14px; background: linear-gradient(#1d1d1f, #1d1d1f) 0 0 / 100% 2px no-repeat, linear-gradient(#1d1d1f, #1d1d1f) 0 6px / 100% 2px no-repeat, linear-gradient(#1d1d1f, #1d1d1f) 0 12px / 72% 2px no-repeat; }
 .vp-markup-logo-image { display: block; max-width: min(100%, 160px); max-height: 54px; object-fit: contain; }
-.vp-markup-qr { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; margin-block: 8px; padding: 6px 8px; border: 1px dashed #8e8e93; color: #6e6e73; vertical-align: middle; }
+.vp-markup-qr { display: inline-flex; align-items: center; gap: 10px; max-width: 100%; margin-block: 8px; vertical-align: middle; }
 .vp-markup-qr--center { display: flex; width: fit-content; margin-inline: auto; }
 .vp-markup-qr--right { display: flex; width: fit-content; margin-left: auto; }
-.vp-markup-qr-box { display: grid; width: 42px; height: 42px; place-items: center; border: 3px solid #1d1d1f; background: #fff; color: #1d1d1f; font: 700 10px/1 Arial, sans-serif; }
+.vp-markup-qr-svg { width: 112px; height: 112px; flex: none; background: #fff; shape-rendering: crispEdges; }
+.vp-markup-qr-svg path { fill: #171717; }
+.vp-markup-qr-box { display: grid; width: 42px; height: 42px; flex: none; place-items: center; border: 3px solid #1d1d1f; background: #fff; color: #1d1d1f; font: 700 10px/1 Arial, sans-serif; }
 .vp-markup-qr-value { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; font: 11px/1.25 "SFMono-Regular", Consolas, monospace; }
 .vp-markup-control { display: block; width: 100%; height: 0; margin-block: 9px; border-top: 1px dashed #8e8e93; position: relative; }
 .vp-markup-control::after { content: '✂'; position: absolute; right: 0; top: -11px; padding-left: 5px; background: var(--vp-paper); color: #6e6e73; font: 14px/1 Arial, sans-serif; }
@@ -303,9 +343,10 @@
   .vp-housing::after { top: 23px; left: 90px; width: 16px; height: 14px; }
   .vp-status { top: 30px; left: 18px; min-height: 57px; padding: 13px 0; gap: 11px; font-size: 15px; }
   .vp-slot { top: 104px; left: 20px; right: 20px; }
-  .vp-paper-window { margin-inline: 24px; }
+  .vp { --vp-markup-pad: 14px; --vp-window-gutter: 24px; }
+  .vp--front:has(.vp-paper--markup) { font-size: 12px; }
   .vp-paper { padding: 32px 18px 32px; font-size: 14px; }
-  .vp-paper--markup { padding: 27px 14px 33px; font-size: 12px; line-height: 1.42; }
+  .vp-paper--markup { padding: 27px var(--vp-markup-pad) 33px; font-size: 12px; line-height: 1.42; }
   .vp-paper--ticket { padding: 27px 18px 33px; }
   .vp-ticket-content { font-size: 14px; }
   .vp-ticket-heading h2 { font-size: 18px; }

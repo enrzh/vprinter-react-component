@@ -1,19 +1,49 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { existsSync } from 'node:fs';
-import React from 'react';
+import { existsSync, readFileSync } from 'node:fs';
+import React, { act } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { Window } from 'happy-dom';
 
-const esm = await import('../dist/index.js');
+const esm = await import('../lib/index.js');
 assert.equal(typeof esm.VirtualPrinter, 'function');
 assert.equal(typeof esm.parsePrinterMarkup, 'function');
 assert.equal(typeof esm.normalizeTicket, 'function');
 assert.ok(esm.SUPPORTED_PRINTER_TAGS.includes('QR'));
+assert.equal(esm.parsePrinterMarkup('<B>Hi</B>')[0].parts[0].type, 'text');
+
+const markupEntry = await import('../lib/markup.js');
+const ticketEntry = await import('../lib/ticket.js');
+assert.equal(typeof markupEntry.parsePrinterMarkup, 'function');
+assert.equal(markupEntry.VirtualPrinter, undefined);
+assert.equal(typeof ticketEntry.normalizeTicket, 'function');
+assert.equal(ticketEntry.VirtualPrinter, undefined);
 
 const require = createRequire(import.meta.url);
-const cjs = require('../dist/index.cjs');
+const cjs = require('../lib/index.cjs');
 assert.equal(typeof cjs.VirtualPrinter, 'function');
-assert.ok(existsSync(new URL('../dist/vprinter-react-component.css', import.meta.url)));
+assert.equal(typeof require('../lib/markup.cjs').parsePrinterMarkup, 'function');
+assert.equal(typeof require('../lib/ticket.cjs').normalizeTicket, 'function');
+assert.ok(existsSync(new URL('../lib/vprinter-react-component.css', import.meta.url)));
+
+const indexSource = readFileSync(new URL('../lib/index.js', import.meta.url), 'utf8');
+const cjsSource = readFileSync(new URL('../lib/index.cjs', import.meta.url), 'utf8');
+assert.doesNotMatch(indexSource, /WebGLRenderer/);
+assert.doesNotMatch(cjsSource, /WebGLRenderer/);
+const specifier = indexSource.match(/import\(\s*['"](\.\/[^'"]+)['"]\s*\)/)?.[1];
+assert.ok(specifier, 'tabletop printer is a separate chunk');
+const chunkUrl = new URL(specifier, new URL('../lib/index.js', import.meta.url));
+const chunkSource = readFileSync(chunkUrl, 'utf8');
+assert.match(chunkSource, /WebGLRenderer/);
+const tabletop = await import(chunkUrl.href);
+assert.match(renderToStaticMarkup(React.createElement(tabletop.TabletopPrinter, { phase: 'printed' })), /vp-model-canvas/);
+
+const css = readFileSync(new URL('../lib/vprinter-react-component.css', import.meta.url), 'utf8');
+assert.match(css, /--vp-columns:\s*48/);
+assert.match(readFileSync(new URL('../src/VirtualPrinter.css', import.meta.url), 'utf8'), /--vp-feed-duration:\s*1900ms/);
+assert.match(css, /--vp-feed-duration:1\.9s/);
+assert.match(css, /white-space:\s*pre/);
+assert.doesNotMatch(css, /vp-markup-line--dense/);
 
 const markup = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
   content: '<B>Smoke test</B>',
@@ -24,14 +54,111 @@ const markup = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
 assert.match(markup, /data-phase="printed"/);
 assert.match(markup, /data-scrollable="false"/);
 assert.match(markup, /--vp-paper-height:320px/);
-const tabletop = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
+
+const grid = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
+  content: '<W>AB</W><BR><QR>https://example.test/order/029</QR>',
+  initiallyPrinted: true,
+}));
+assert.match(grid, /vp-markup-qr-svg/);
+assert.match(grid, /width:4ch/);
+assert.match(grid, /https:\/\/example\.test\/order\/029/);
+assert.doesNotMatch(grid, /vp-markup-line--dense/);
+
+const upward = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
   content: '<B>Smoke test</B>', orientation: 'up', initiallyPrinted: true,
 }));
-assert.match(tabletop, /vp-model-canvas/);
-assert.match(tabletop, /aria-label="Printer controls"/);
+assert.doesNotMatch(upward, /vp-model-canvas/);
+assert.match(upward, /vp-housing/);
+assert.match(upward, /aria-label="Printer controls"/);
+
+const invalid = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
+  receipt: { ...esm.cafeReceipt, items: [] },
+  initiallyPrinted: true,
+}));
+assert.match(invalid, /role="alert"/);
+assert.match(invalid, /at least one item/);
+
+const unkeyed = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
+  receipt: {
+    ...esm.cafeReceipt,
+    items: [
+      { name: 'Soup', quantity: 1, unitAmount: 100 },
+      { name: 'Bread', quantity: 2, unitAmount: 50 },
+    ],
+  },
+  initiallyPrinted: true,
+}));
+assert.match(unkeyed, /1x Soup/);
+assert.match(unkeyed, /2x Bread/);
+
 assert.throws(() => esm.VirtualPrinter({}), /exactly one/);
 assert.throws(() => esm.VirtualPrinter({ content: 'x', ticket: {} }), /exactly one/);
 assert.throws(() => esm.VirtualPrinter({ content: 42 }), /content must be a string/);
 assert.throws(() => esm.VirtualPrinter({ receipt: 'x' }), /receipt must be an object/);
 
-console.log('package exports: ESM, CommonJS, and CSS verified');
+const win = new Window({ url: 'http://localhost/' });
+globalThis.window = win;
+globalThis.document = win.document;
+globalThis.HTMLElement = win.HTMLElement;
+globalThis.SVGElement = win.SVGElement;
+globalThis.Element = win.Element;
+globalThis.Node = win.Node;
+globalThis.DocumentFragment = win.DocumentFragment;
+globalThis.MutationObserver = win.MutationObserver;
+globalThis.ResizeObserver = win.ResizeObserver;
+globalThis.AnimationEvent = win.AnimationEvent;
+globalThis.getComputedStyle = win.getComputedStyle.bind(win);
+globalThis.requestAnimationFrame = callback => win.requestAnimationFrame(callback);
+globalThis.cancelAnimationFrame = id => win.cancelAnimationFrame(id);
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+let reduceMotion = false;
+win.matchMedia = query => ({
+  matches: reduceMotion && String(query).includes('prefers-reduced-motion'),
+  media: String(query),
+  addEventListener() {},
+  removeEventListener() {},
+  addListener() {},
+  removeListener() {},
+  dispatchEvent() { return false; },
+});
+globalThis.matchMedia = win.matchMedia;
+
+const { createRoot } = await import('react-dom/client');
+
+async function mount(props) {
+  const host = document.createElement('div');
+  document.body.appendChild(host);
+  const root = createRoot(host);
+  await act(async () => { root.render(React.createElement(esm.VirtualPrinter, props)); });
+  const phase = () => host.querySelector('.vp')?.dataset.phase;
+  const clickPrint = () => act(async () => { host.querySelector('.vp-print').click(); });
+  return { root, host, phase, clickPrint };
+}
+
+const animated = await mount({ content: 'Hello' });
+assert.equal(animated.phase(), 'ready');
+await animated.clickPrint();
+assert.equal(animated.phase(), 'printing');
+await act(async () => {
+  animated.host.querySelector('.vp-paper-window').dispatchEvent(new win.AnimationEvent('animationend', {
+    animationName: 'vp-feed-front', bubbles: true,
+  }));
+});
+assert.equal(animated.phase(), 'printed');
+await act(async () => { animated.root.unmount(); });
+
+const timed = await mount({ content: 'Hello again' });
+await timed.clickPrint();
+assert.equal(timed.phase(), 'printing');
+await act(async () => { await new Promise(resolve => setTimeout(resolve, 3500)); });
+assert.equal(timed.phase(), 'printed');
+await act(async () => { timed.root.unmount(); });
+
+reduceMotion = true;
+const reduced = await mount({ content: 'Skip' });
+await reduced.clickPrint();
+assert.equal(reduced.phase(), 'printed');
+await act(async () => { reduced.root.unmount(); });
+await win.happyDOM.abort();
+
+console.log('package exports: ESM, CommonJS, CSS, and print phases verified');

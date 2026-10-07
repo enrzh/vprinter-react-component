@@ -10,7 +10,12 @@ export function TabletopPrinter({ phase }) {
 
   useEffect(() => {
     const element = canvas.current;
-    const renderer = new THREE.WebGLRenderer({ canvas: element, alpha: true, antialias: true, preserveDrawingBuffer: true });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas: element, alpha: true, antialias: true, preserveDrawingBuffer: true });
+    } catch {
+      return undefined;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;

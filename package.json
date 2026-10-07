@@ -5,16 +5,24 @@
   "repository": "github:enrzh/vprinter-react-component",
   "homepage": "https://enrzh.github.io/vprinter-react-component/",
   "type": "module",
-  "sideEffects": ["**/*.css"],
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./lib/index.cjs",
+  "module": "./lib/index.js",
   "types": "./src/index.d.ts",
   "files": [
-    "dist",
+    "lib",
     "src/index.js",
     "src/index.d.ts",
+    "src/markup.js",
+    "src/markup.d.ts",
+    "src/ticket.js",
+    "src/ticket.d.ts",
     "src/VirtualPrinter.jsx",
     "src/VirtualPrinter.css",
+    "src/TabletopPrinter.jsx",
+    "src/tearGesture.js",
     "src/receipt.js",
     "src/printerMarkup.js",
     "src/simpleTicket.js",
@@ -24,42 +32,43 @@
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs",
+      "default": "./lib/index.js"
     },
-    "./styles.css": "./dist/vprinter-react-component.css",
+    "./styles.css": "./lib/vprinter-react-component.css",
     "./markup": {
-      "types": "./src/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "types": "./src/markup.d.ts",
+      "import": "./lib/markup.js",
+      "require": "./lib/markup.cjs",
+      "default": "./lib/markup.js"
     },
     "./ticket": {
-      "types": "./src/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "types": "./src/ticket.d.ts",
+      "import": "./lib/ticket.js",
+      "require": "./lib/ticket.cjs",
+      "default": "./lib/ticket.js"
     }
   },
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build --base=./",
-    "build:lib": "vite build --mode library",
-    "prepare": "vite build --mode library",
-    "test:package": "vite build --mode library && node scripts/check-package.mjs",
+    "build:lib": "vite build --mode library && vite build --mode library-cjs",
+    "test:package": "vite build --mode library && vite build --mode library-cjs && node scripts/check-package.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test src/*.test.js"
   },
   "dependencies": {
     "jsbarcode": "3.12.3",
-    "three": "0.186.1"
+    "three": "0.186.1",
+    "uqr": "0.1.3"
   },
   "peerDependencies": {
     "react": ">=18.0.0"
   },
   "devDependencies": {
+    "happy-dom": "^20.14.5",
     "html-to-image": "^1.11.13",
     "react": "19.3.0",
     "react-dom": "19.3.0",

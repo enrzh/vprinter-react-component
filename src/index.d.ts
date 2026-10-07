@@ -83,7 +83,43 @@ export declare const printerInputExamples: Record<string, string>;
 export declare function calculateTotals(items: ReceiptItem[], taxBasisPoints: number): { subtotal: number; tax: number; total: number };
 export declare function formatOrderDate(issuedAt: string, locale: string, timeZone: string): string;
 export declare function moneyFormatter(locale: string, currency: string): (minorUnits: number) => string;
+export interface PrinterTextPart {
+  type: 'text';
+  text: string;
+  bold: boolean;
+  center: boolean;
+  right?: boolean;
+  doubleHeight?: boolean;
+  doubleWidth?: boolean;
+}
+
+export interface PrinterLogoPart {
+  type: 'logo';
+  center: boolean;
+  right: boolean;
+}
+
+export interface PrinterQrPart {
+  type: 'qr';
+  text: string;
+  center: boolean;
+  right?: boolean;
+}
+
+export interface PrinterControlPart {
+  type: 'control';
+  control: 'cut' | 'plugin';
+}
+
+export type PrinterMarkupPart = PrinterTextPart | PrinterLogoPart | PrinterQrPart | PrinterControlPart;
+
+export interface PrinterMarkupLine {
+  parts: PrinterMarkupPart[];
+  center: boolean;
+  right: boolean;
+}
+
 export declare function normalizePrinterMarkup(input: string): string;
-export declare function parsePrinterMarkup(input: string): unknown[];
+export declare function parsePrinterMarkup(input: string): PrinterMarkupLine[];
 export declare function normalizeTicket(input: TicketData): NormalizedTicket;
 export declare const SUPPORTED_PRINTER_TAGS: readonly string[];

@@ -66,10 +66,11 @@ import 'vprinter-react-component/styles.css';
 <VirtualPrinter content={`<C><BOLD>Order #029</BOLD></C>\n1 x Burger       9.99\n<B>Total          9.99</B>`} initiallyPrinted />
 ```
 
-The package builds its ESM and CommonJS entry points during installation, so
-GitHub installs work with the normal React bundlers as well as Node-based
-tooling. The packaged build keeps CSS as an explicit side-effect import so
-consumers can choose when to load the printer styles.
+The package ships prebuilt ESM and CommonJS in `lib/`. Installing from GitHub
+does not run a build. `vprinter-react-component/markup` and
+`vprinter-react-component/ticket` are parser-only entry points. The tabletop
+model is a separate chunk and loads only when `orientation` is `"up"`. CSS stays
+an explicit side-effect import, so the app chooses when to load the printer styles.
 
 Long receipts scroll by default. Set `scrollable={false}` when the full paper
 should remain visible and grow with its content:
@@ -81,9 +82,9 @@ should remain visible and grow with its content:
 React is a peer dependency, so the app's existing React runtime is reused.
 
 For a source-copy integration, copy `src/VirtualPrinter.jsx`,
-`src/TabletopPrinter.jsx`, `src/VirtualPrinter.css`, `src/receipt.js`,
-`src/simpleTicket.js`, and `src/printerMarkup.js` into a React app and install
-`jsbarcode` and `three`.
+`src/TabletopPrinter.jsx`, `src/tearGesture.js`, `src/VirtualPrinter.css`,
+`src/receipt.js`, `src/simpleTicket.js`, and `src/printerMarkup.js` into a React
+app and install `jsbarcode`, `three`, and `uqr`.
 The component imports its scoped CSS. The demo files, including `demoImage.js`,
 are not needed to use the component.
 
@@ -128,16 +129,17 @@ strings or objects with `name`/`label`, optional `quantity`, and optional
 Supported FEIEYUN small-ticket commands are `<B>` and `<BOLD>` for bold text,
 `<C>` and `<RIGHT>` for alignment, `<CB>`/`<DB>` for centered or double-size
 text, `<L>` and `<W>` for doubled height or width, `<BR>` for a line break, and
-`<LOGO>` for a logo slot. `<QR>...</QR>` is shown as a safe QR preview with its
-payload, while `<CUT>` and `<PLUGIN>` are shown as non-executing printer control
+`<LOGO>` for a logo slot. `<QR>...</QR>` draws a scannable code and shows its
+payload as text, while `<CUT>` and `<PLUGIN>` are shown as non-executing printer control
 markers. Tags are case-insensitive. Existing newlines, repeated spaces,
 separators, Unicode and common entities such as `&nbsp;` and `&#x20;` are
 preserved. Payloads that contain escaped tags such as `\\<B>text\\</B>` are
 accepted too. Unknown tags remain literal text. Adjacent centered blocks
 (`<C>To Go</C><C>029</C>`) become separate lines, matching the printer dialect.
 Pass `logo` as an image URL or React node to replace the default mark used by
-`<LOGO>`. Long fixed-width report rows keep their spacing and can be scrolled
-inside the paper on narrow screens.
+`<LOGO>`. Markup paper is a 48-column slip (`--vp-columns`, set it to `32` for
+58mm). Every markup line keeps its spaces. Rows that are wider than the slip,
+including doubled characters, scroll inside the paper instead of wrapping.
 
 `SUPPORTED_PRINTER_TAGS` is exported when an integration needs to validate a
 payload before displaying it. The component remains a visual preview: `<CUT>`
@@ -150,8 +152,9 @@ cash-book balances, and customer-card totals.
 
 `<B>` remains bold for compatibility with the restaurant payloads shown here;
 use `<CB>`, `<DB>`, `<L>`, or `<W>` when the source intends enlarged printer
-text. This component is a visual preview and does not send commands to a
-physical printer, open a cash drawer, play audio, or produce a scannable QR code.
+text. Doubled characters reserve their columns on the slip. This component is a
+visual preview and does not send commands to a physical printer, open a cash
+drawer, or play audio.
 
 | Prop | Default | Purpose |
 | --- | --- | --- |
@@ -203,9 +206,12 @@ remounting the component:
 />
 ```
 
-The CSS variables `--vp-ink`, `--vp-muted`, `--vp-paper`, and
-`--vp-feed-duration` can be overridden on the component. The default animation
-lasts 2.8 seconds; keep custom durations below the 3.4-second fallback completion.
+The CSS variables `--vp-ink`, `--vp-muted`, `--vp-paper`, `--vp-columns`, and
+`--vp-feed-duration` can be overridden on the component. The base feed animation
+is 2.8 seconds, and the front printer uses 1.9 seconds. Keep a custom duration
+below the 3.4-second fallback, which marks the paper printed if the animation
+does not finish. A structured receipt with invalid items, tax, or payment data
+stays on screen and shows the reason, instead of blanking the surrounding page.
 
 ## Build and deployment
 
