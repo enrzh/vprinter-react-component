@@ -4,11 +4,13 @@ import { encode } from 'uqr';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { parsePrinterMarkup } from './printerMarkup.js';
 import { normalizeTicket } from './simpleTicket.js';
-import { tearAxis } from './tearGesture.js';
+import { tearAxis, tearThreshold, tearTravel } from './tearGesture.js';
 import './VirtualPrinter.css';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 const PRINT_FALLBACK_MS = 3400;
+const TEAR_FALLBACK_MS = 900;
+const TEAR_STYLE = ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate', '--vp-tear-x', '--vp-tear-y', '--vp-tear-rotate', '--vp-rip'];
 
 function PrinterIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -207,9 +209,8 @@ export function VirtualPrinter({
     drag.current = null;
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
     paperScroll.current?.removeAttribute('data-tear-axis');
-    for (const property of ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate', '--vp-tear-x', '--vp-tear-y', '--vp-tear-rotate']) {
-      paperScroll.current?.style.removeProperty(property);
-    }
+    for (const property of TEAR_STYLE) paperScroll.current?.style.removeProperty(property);
+    paperScroll.current?.style.removeProperty('transition');
     paperScroll.current?.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
     paperScroll.current?.parentElement?.style.removeProperty('--vp-pull');
     nextId.current = 0;
@@ -235,15 +236,24 @@ export function VirtualPrinter({
     return () => observer.disconnect();
   }, [orientation, isScrollable, printing, job.id]);
 
-  function finishTear() {
-    drag.current = null;
+  useIsomorphicLayoutEffect(() => {
+    if (!tearing) return;
+    // The tear animation now owns the transform. Dropping the drag flag before paint avoids a snap-back frame.
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
-    paperScroll.current?.removeAttribute('data-tear-axis');
-    for (const property of ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate', '--vp-tear-x', '--vp-tear-y', '--vp-tear-rotate']) {
-      paperScroll.current?.style.removeProperty(property);
-    }
-    paperScroll.current?.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
-    paperScroll.current?.parentElement?.style.removeProperty('--vp-pull');
+  }, [tearing]);
+
+  function finishTear() {
+    const paper = paperScroll.current;
+    const root = paper?.closest('.vp');
+    // Hide the sheet before the tear animation is cancelled, or it pops back to full opacity.
+    if (root?.dataset.phase === 'tearing') root.dataset.phase = 'ready';
+    drag.current = null;
+    root?.removeAttribute('data-dragging');
+    paper?.removeAttribute('data-tear-axis');
+    paper?.style.removeProperty('transition');
+    for (const property of TEAR_STYLE) paper?.style.removeProperty(property);
+    paper?.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
+    paper?.parentElement?.style.removeProperty('--vp-pull');
     setJob(current => current.phase === 'tearing' ? { ...current, phase: 'ready' } : current);
   }
 
@@ -262,13 +272,20 @@ export function VirtualPrinter({
     event.currentTarget.closest('.vp')?.setAttribute('data-dragging', 'true');
     const horizontal = gesture.axis === 'horizontal';
     const distance = Math.max(0, direction * vertical);
-    const pull = horizontal ? 0 : distance;
+    const along = horizontal ? Math.abs(sideways) : distance;
+    const threshold = tearThreshold(orientation, gesture.axis, event.currentTarget.clientWidth);
+    const travel = tearTravel(along, threshold);
+    const pull = horizontal ? 0 : travel;
     gesture.sideways = sideways;
+    gesture.distance = along;
     event.currentTarget.style.setProperty('--vp-drag-y', `${direction * pull}px`);
+    event.currentTarget.style.setProperty('--vp-rip', `${Math.min(1, along / threshold)}`);
     if (orientation === 'up') event.currentTarget.parentElement.style.setProperty('--vp-pull', `${pull}px`);
-    event.currentTarget.style.setProperty('--vp-drag-x', `${horizontal ? sideways : orientation === 'up' ? 0 : Math.max(-40, Math.min(40, sideways * .35))}px`);
-    event.currentTarget.style.setProperty('--vp-drag-rotate', `${horizontal ? Math.max(-8, Math.min(8, sideways * .06)) : orientation === 'up' ? 0 : Math.max(-4, Math.min(4, sideways * .04))}deg`);
-    gesture.distance = horizontal ? Math.abs(sideways) : distance;
+    const drift = horizontal
+      ? Math.sign(sideways || 0) * travel
+      : orientation === 'up' ? 0 : Math.max(-28, Math.min(28, sideways * .22));
+    event.currentTarget.style.setProperty('--vp-drag-x', `${drift}px`);
+    event.currentTarget.style.setProperty('--vp-drag-rotate', `${horizontal ? Math.max(-7, Math.min(7, drift * .04)) : orientation === 'up' ? 0 : Math.max(-5, Math.min(5, sideways * .045))}deg`);
     return gesture.distance;
   }
 
@@ -278,32 +295,35 @@ export function VirtualPrinter({
     const distance = cancelled ? gesture.distance || 0 : movePaper(event);
     drag.current = null;
     const paper = event.currentTarget;
-    paper.closest('.vp')?.removeAttribute('data-dragging');
-    if (gesture.axis === 'scroll') {
+    if (!gesture.axis || gesture.axis === 'scroll') {
+      paper.closest('.vp')?.removeAttribute('data-dragging');
+      paper.style.removeProperty('--vp-rip');
       paper.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
       return;
     }
     const horizontal = gesture.axis === 'horizontal';
-    const threshold = horizontal
-      ? (orientation === 'front' ? 30 : Math.min(72, Math.max(36, paper.clientWidth * .28)))
-      : (orientation === 'up' ? 36 : 18);
-    if (distance >= threshold) {
+    const threshold = tearThreshold(orientation, gesture.axis, paper.clientWidth);
+    if (!cancelled && distance >= threshold) {
       if (horizontal) {
-        const side = Math.sign(gesture.sideways);
+        const side = Math.sign(gesture.sideways || 1);
         if (orientation === 'front') paper.dataset.tearAxis = 'horizontal';
-        paper.style.setProperty('--vp-tear-x', `${side * 260}px`);
-        paper.style.setProperty('--vp-tear-y', orientation === 'up' ? '-80px' : '35px');
-        paper.style.setProperty('--vp-tear-rotate', `${side * 9}deg`);
+        paper.style.setProperty('--vp-tear-x', `${side * 300}px`);
+        paper.style.setProperty('--vp-tear-y', orientation === 'up' ? '-72px' : '72px');
+        paper.style.setProperty('--vp-tear-rotate', `${side * 8}deg`);
       }
+      paper.style.setProperty('--vp-rip', '1');
+      paper.style.transition = 'none';
       startTear();
-    } else {
-      paper.style.removeProperty('--vp-drag-x');
-      paper.style.removeProperty('--vp-drag-y');
-      paper.style.removeProperty('--vp-drag-rotate');
-      paper.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
-      paper.scrollTop = gesture.scrollTop;
-      paper.parentElement.style.removeProperty('--vp-pull');
+      return;
     }
+    paper.closest('.vp')?.removeAttribute('data-dragging');
+    paper.style.removeProperty('--vp-drag-x');
+    paper.style.removeProperty('--vp-drag-y');
+    paper.style.removeProperty('--vp-drag-rotate');
+    paper.style.removeProperty('--vp-rip');
+    paper.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
+    paper.scrollTop = gesture.scrollTop;
+    paper.parentElement.style.removeProperty('--vp-pull');
   }
 
   useEffect(() => {
@@ -320,7 +340,7 @@ export function VirtualPrinter({
     const onMotionChange = () => { if (motion.matches) finishTear(); };
     onMotionChange();
     motion.addEventListener('change', onMotionChange);
-    const timer = window.setTimeout(finishTear, 620);
+    const timer = window.setTimeout(finishTear, TEAR_FALLBACK_MS);
     return () => { window.clearTimeout(timer); motion.removeEventListener('change', onMotionChange); };
   }, [tearing]);
 
