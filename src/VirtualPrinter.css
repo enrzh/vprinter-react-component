@@ -199,6 +199,9 @@
 .vp-paper[data-raster-ready="true"] .vp-paper-content { opacity: 0; pointer-events: none; }
 .vp-paper[data-raster-ready="true"] .vp-paper-surface { display: block; }
 .vp[data-flexing="true"] .vp-paper-surface { overflow: visible; filter: drop-shadow(0 7px 6px #00000018); }
+/* Keep the same shadow on the cached sheet, so its fall can be composited as one layer. */
+.vp[data-detached="true"] .vp-paper-surface { filter: none; }
+.vp[data-detached="true"] .vp-paper-surface canvas { filter: drop-shadow(0 7px 6px #00000018); will-change: transform, opacity; }
 .vp[data-phase="tearing"] .vp-paper-window { overflow: visible; clip-path: none; }
 .vp[data-phase="tearing"] .vp-paper:not([data-raster-ready="true"]) { clip-path: inset(var(--vp-cut-top, 0px) -100vw var(--vp-cut-bottom, 0px) -100vw); }
 .vp[data-phase="tearing"] .vp-paper-scroll { pointer-events: none; }

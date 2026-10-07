@@ -38,7 +38,14 @@ test('bending and tearing draw the same ink-and-paper texture with bounded alloc
         tearDuration: 800, tearSide: 1 });
       assert.ok(draws.length > 1);
       assert.ok(draws.every(draw => draw[2] >= 399.6 && draw[2] + draw[4] <= 720.4));
+      assert.ok(parseFloat(canvas.style.height) < 1100, 'scroll-mode allocation excludes hidden receipt rows');
+      assert.ok(parseFloat(canvas.style.top) > 0, 'the cropped canvas retains its original paper coordinates');
+      assert.ok(canvas.width / parseFloat(canvas.style.width) <= texture.width / bitmap.width, 'animation does not upsample the cached ink');
     }
+    draws.length = 0;
+    paintPaper(canvas, bitmap, { start: 0, end: 400, anchor: 0, lever: 240, direction: 1, x: 0, y: 12 });
+    assert.ok(draws.every(draw => draw[0] === texture));
+    assert.ok(draws.some(draw => draw[8] > draw[4]), 'rectangle draws preserve vertical paper deformation');
   } finally {
     if (previousPath === undefined) delete globalThis.Path2D; else globalThis.Path2D = previousPath;
   }

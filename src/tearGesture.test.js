@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { tearAxis, tearThreshold, tearTravel, tearMotion, tearFrame, tearFlight, bendProfile, paperContour, paperOutline, paperSection, paperRow, paperPoint, stepPaperSpring, feedDuration } from './tearGesture.js';
+import { tearAxis, tearThreshold, tearTravel, tearMotion, tearFrame, tearFlight, bendProfile, paperStations, paperContour, paperOutline, paperSection, paperRow, paperPoint, stepPaperSpring, feedDuration } from './tearGesture.js';
 
 test('front-feed sideways touch tears from the receipt while vertical touch scrolls', () => {
   assert.equal(tearAxis('front', 'touch', false, 30, 5), 'horizontal');
@@ -75,6 +75,18 @@ test('long paper feeds at the same pace instead of racing a short fixed timeout'
   assert.equal(feedDuration(1900, 1950), 5700);
   assert.equal(feedDuration(2800, 1300), 5600);
   assert.equal(feedDuration(1900, 50000), 16000);
+});
+
+test('mesh detail stays bounded by curvature and keeps a fine progressive fold', () => {
+  for (const direction of [1, -1]) {
+    const anchor = direction > 0 ? 0 : 10000;
+    const stations = paperStations(10000, { anchor, direction, lever: 500, torn: true });
+    assert.ok(stations.length <= 55, 'straight receipt length does not multiply mesh rows');
+    const fold = stations.map(position => direction * (position - anchor)).filter(distance => distance >= 0 && distance <= 160).sort((a, b) => a - b);
+    assert.ok(fold[0] === 0);
+    assert.equal(fold.at(-1), 160);
+    assert.ok(fold.slice(1).every((distance, i) => distance - fold[i] <= 6), 'the active fold remains finely sampled');
+  }
 });
 
 test('the pulled corner peels first while the other corner remains at the cutter', () => {

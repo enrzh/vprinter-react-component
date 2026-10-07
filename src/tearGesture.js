@@ -61,12 +61,13 @@ export function paperRow(width, position, bend) {
   const reach = (side > 0 ? 1 - crease : crease) * width;
   const axisLength = Math.hypot(reach, depth);
   const angle = torn ? Math.min(1.25, 1.1 * Math.sin(peel * Math.PI * .75) + Math.abs(y) / 100) * (1 - release * .75) : 0;
+  const tilt = Math.max(-.24, Math.min(.24, -direction * Math.atan(pull * profile.slope +
+    (distance > 0 && distance < 500 ? flutter * 7 * Math.PI / 500 * Math.cos(Math.PI * distance / 500) : 0))));
   return {
     width, anchor, position, distance, depth, side,
     centerX: width / 2 + pull * profile.weight + flutter * 7 * Math.sin(Math.PI * clampUnit(distance / 500)),
     centerY: position + y * profile.weight - direction * shortening,
-    tilt: Math.max(-.24, Math.min(.24, -direction * Math.atan(pull * profile.slope +
-      (distance > 0 && distance < 500 ? flutter * 7 * Math.PI / 500 * Math.cos(Math.PI * distance / 500) : 0)))),
+    tilt, cosTilt: Math.cos(tilt), sinTilt: Math.sin(tilt), cosFold: Math.cos(angle),
     crease: crease + side * distance / depth * (side > 0 ? 1 - crease : crease),
     hinge: (crease - .5) * width,
     axisX: side * reach / axisLength, axisY: direction * depth / axisLength,
@@ -81,13 +82,14 @@ export function paperPoint(row, u) {
   if (folded) {
     const relativeX = across - row.hinge;
     const dot = row.axisX * relativeX + row.axisY * along;
-    const cosine = Math.cos(row.fold);
+    const cosine = row.cosFold ?? Math.cos(row.fold);
     across = row.hinge + relativeX * cosine + row.axisX * dot * (1 - cosine);
     along = along * cosine + row.axisY * dot * (1 - cosine);
   }
   const lift = along - (row.position - row.anchor);
-  return [row.centerX + across * Math.cos(row.tilt) - lift * Math.sin(row.tilt),
-    row.centerY + across * Math.sin(row.tilt) + lift * Math.cos(row.tilt)];
+  const cosine = row.cosTilt ?? Math.cos(row.tilt), sine = row.sinTilt ?? Math.sin(row.tilt);
+  return [row.centerX + across * cosine - lift * sine,
+    row.centerY + across * sine + lift * cosine];
 }
 
 export function paperSection(width, position, anchor, gripDistance, x, y, direction, torn = false, peel = 0, side = 1) {
@@ -99,29 +101,37 @@ export function paperOutline(width, height, anchor, gripDistance, x, y, directio
   return paperContour(width, height, { anchor, lever: gripDistance, x, y, direction, torn, peel, side });
 }
 
-export function paperContour(width, height, bend) {
+export function paperStations(height, bend) {
   const { anchor, lever, direction, torn } = bend;
   const start = Math.max(bend.start ?? 0, torn && direction > 0 ? anchor : 0);
   const end = Math.min(bend.end ?? height, torn && direction < 0 ? anchor : height);
-  const stations = [...new Set([
+  const length = Math.max(48, lever || height);
+  const depth = Math.min(160, Math.max(72, length * .65));
+  // Sample curvature and the active fold. Straight paper needs only its endpoints.
+  return [...new Set([
     start, end,
-    ...Array.from({ length: 25 }, (_, i) => height * i / 24),
     anchor,
-    anchor - 32,
-    anchor + 32,
-    anchor + direction * 72,
-    anchor + direction * 160,
-    Math.max(0, Math.min(height, anchor + direction * lever)),
+    ...Array.from({ length: 25 }, (_, i) => length * i / 24)
+      .filter(distance => !torn || distance >= depth).map(distance => anchor + direction * distance),
+    ...(torn ? Array.from({ length: Math.ceil(depth / 6) + 1 }, (_, i) => anchor + direction * Math.min(depth, i * 6)) : []),
+    ...(bend.flutter ? Array.from({ length: 17 }, (_, i) => anchor + direction * 500 * i / 16) : []),
   ])].filter(n => n >= start && n <= end).sort((a, b) => a - b);
+}
+
+export function paperContour(width, height, bend, rowAt = position => paperRow(width, position, bend)) {
+  const { direction, torn, anchor } = bend;
+  const start = Math.max(bend.start ?? 0, torn && direction > 0 ? anchor : 0);
+  const end = Math.min(bend.end ?? height, torn && direction < 0 ? anchor : height);
+  const stations = paperStations(height, bend);
   const left = [], right = [];
   for (const position of stations) {
-    const row = paperRow(width, position, bend);
+    const row = rowAt(position);
     left.push(paperPoint(row, 0));
     right.push(paperPoint(row, 1));
   }
   const toothCount = Math.max(1, Math.floor(width / 5));
   const teeth = (position, reverse, sign) => {
-    const row = paperRow(width, position, bend);
+    const row = rowAt(position);
     return Array.from({ length: toothCount }, (_, i) => {
       const t = (i + 1) / (toothCount + 1);
       const point = paperPoint(row, reverse ? 1 - t : t);

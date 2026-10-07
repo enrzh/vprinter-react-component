@@ -4,7 +4,7 @@ import { encode } from 'uqr';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { parsePrinterMarkup } from './printerMarkup.js';
 import { normalizeTicket } from './simpleTicket.js';
-import { tearAxis, tearThreshold, tearTravel, tearMotion, tearFrame, tearFlight, stepPaperSpring, feedDuration } from './tearGesture.js';
+import { tearAxis, tearThreshold, tearTravel, tearMotion, tearFlight, stepPaperSpring, feedDuration } from './tearGesture.js';
 import { rasterizePaper, paintPaper } from './paperSurface.js';
 import './VirtualPrinter.css';
 
@@ -266,6 +266,7 @@ export const VirtualPrinter = forwardRef(function VirtualPrinter({
     const refresh = async () => {
       const next = `${article.offsetWidth}:${article.offsetHeight}`;
       if (cancelled || !article.offsetWidth || !article.offsetHeight || dimensions === next) return;
+      if (article.closest('.vp').dataset.phase === 'tearing') { finishTear(); return; }
       dimensions = next;
       const currentVersion = ++version;
       drag.current = null;
@@ -352,7 +353,8 @@ export const VirtualPrinter = forwardRef(function VirtualPrinter({
   useIsomorphicLayoutEffect(() => {
     drag.current = null;
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
-    stopFlex();
+    if (paperScroll.current?.closest('.vp')?.dataset.phase === 'tearing') finishTear();
+    else stopFlex();
   }, [orientation, isScrollable]);
 
   function stopFlex() {
@@ -362,18 +364,20 @@ export const VirtualPrinter = forwardRef(function VirtualPrinter({
     flexTimer.current = 0;
     const current = flex.current;
     if (!current) return;
-    for (const node of [current.paper, surfaceCanvas.current?.parentElement]) {
+    if (current.flight) { current.flight.onfinish = null; current.flight.cancel(); }
+    for (const node of [current.paper, surfaceCanvas.current]) {
       node?.style.removeProperty('transform');
       node?.style.removeProperty('opacity');
       node?.style.removeProperty('transform-origin');
     }
     current.root.removeAttribute('data-flexing');
     current.root.removeAttribute('data-dragging');
+    current.root.removeAttribute('data-detached');
     current.article.style.removeProperty('--vp-scroll-offset');
     current.article.style.removeProperty('--vp-cut-top');
     current.article.style.removeProperty('--vp-cut-bottom');
     current.paper.style.removeProperty('--vp-viewport-height');
-    if (bitmap.current) paintPaper(surfaceCanvas.current, bitmap.current, { direction: current.direction });
+    if (bitmap.current && current.root.dataset.phase !== 'ready') paintPaper(surfaceCanvas.current, bitmap.current, { direction: current.direction });
     current.paper.scrollTop = current.scrollTop;
     flex.current = null;
   }
@@ -402,7 +406,7 @@ export const VirtualPrinter = forwardRef(function VirtualPrinter({
 
   function paintFlex() {
     const current = flex.current;
-    if (!current) return;
+    if (!current || current.detached) return;
     if (bitmap.current) paintPaper(surfaceCanvas.current, bitmap.current, current);
   }
 
@@ -421,14 +425,8 @@ export const VirtualPrinter = forwardRef(function VirtualPrinter({
     if (current.tearAt) {
       current.tearProgress = (now - current.tearAt) / current.tearDuration;
       if (current.tearProgress >= 1) { finishTear(); return; }
-      const motion = tearFrame(current.tearProgress);
-      current.targetX = current.tearPullX * (1 - motion.release * .85) - current.tearSide * motion.flutter * 7;
-      current.targetY = current.tearPullY * (1 - motion.release);
-      const flight = tearFlight(current.tearProgress, current.tearMotion);
-      const target = bitmap.current ? surfaceCanvas.current.parentElement : current.paper;
-      target.style.transformOrigin = `${current.width * current.grip}px ${bitmap.current ? current.anchor : current.direction > 0 ? 0 : current.paper.clientHeight}px`;
-      target.style.transform = `translate(${flight.x}px, ${flight.y}px) rotate(${flight.rotation}deg)`;
-      target.style.opacity = flight.opacity;
+      current.targetX = current.tearPullX;
+      current.targetY = current.tearPullY;
     }
     const dt = (now - current.last) / 1000;
     current.last = now;
@@ -436,7 +434,36 @@ export const VirtualPrinter = forwardRef(function VirtualPrinter({
     const y = stepPaperSpring(current.y, current.vy, current.targetY, dt);
     current.x = x.value; current.vx = x.velocity;
     current.y = y.value; current.vy = y.velocity;
+    const progress = current.tearProgress;
+    const released = progress >= .36 && bitmap.current;
+    // Complete the peel once, then reuse the same curved ink-and-paper image in flight.
+    if (released && !current.detached) current.tearProgress = .36;
     paintFlex();
+    current.tearProgress = progress;
+    if (current.tearAt) {
+      const target = bitmap.current ? surfaceCanvas.current : current.paper;
+      target.style.transformOrigin = bitmap.current
+        ? `${current.width * current.grip - parseFloat(target.style.left)}px ${current.anchor - parseFloat(target.style.top)}px`
+        : `${current.width * current.grip}px ${current.direction > 0 ? 0 : current.paper.clientHeight}px`;
+      const transform = flight => `translate3d(${flight.x}px, ${flight.y}px, 0) rotate(${flight.rotation}deg)`;
+      if (released && !current.detached) {
+        current.detached = true;
+        current.root.dataset.detached = 'true';
+        if (typeof target.animate === 'function') {
+          try {
+            current.flight = target.animate(Array.from({ length: 33 }, (_, i) => {
+              const flight = tearFlight(progress + (1 - progress) * i / 32, current.tearMotion);
+              return { transform: transform(flight), opacity: flight.opacity };
+            }), { duration: (1 - progress) * current.tearDuration, fill: 'forwards' });
+            current.flight.onfinish = finishTear;
+            return;
+          } catch { /* Keep the frame-clock fallback if native animation is unavailable. */ }
+        }
+      }
+      const flight = tearFlight(progress, current.tearMotion);
+      target.style.transform = transform(flight);
+      target.style.opacity = flight.opacity;
+    }
     const settled = Math.abs(current.x - current.targetX) + Math.abs(current.y - current.targetY) < .1 && Math.abs(current.vx) + Math.abs(current.vy) < 1;
     if (!settled || current.tearAt) requestFlexFrame(true);
     else if (!drag.current) stopFlex();
@@ -456,7 +483,7 @@ export const VirtualPrinter = forwardRef(function VirtualPrinter({
     if (!flexFrame.current) {
       if (!continuing) flex.current.last = performance.now();
       flexFrame.current = requestAnimationFrame(animateFlex);
-      // Some visible webviews throttle rAF; keep the texture in step with CSS motion.
+      // Watchdog after two missed 60 Hz frames. Ego's visible webview can deliver rAF at 1 Hz.
       if (document.visibilityState === 'visible') flexTimer.current = window.setTimeout(animateFlex, 32);
     }
   }

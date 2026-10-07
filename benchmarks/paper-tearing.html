@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Paper tearing performance</title>
+    <style>
+      body { margin: 20px; background: #edf1f5; font: 14px/1.5 system-ui; }
+      button { font: inherit; padding: 10px; }
+      pre { white-space: pre-wrap; }
+      #printer { width: 350px; max-width: 100%; }
+    </style>
+  </head>
+  <body>
+    <h1>Paper tearing performance</h1>
+    <p>Run on the device being measured. Desktop viewport/CPU emulation does not prove mobile FPS.</p>
+    <button id="renderer">Measure renderer</button>
+    <button id="interaction">Measure interactions</button>
+    <output id="progress">Ready</output>
+    <pre id="results"></pre>
+    <div id="printer"></div>
+    <script type="module" src="./paper-tearing.js"></script>
+  </body>
+</html>

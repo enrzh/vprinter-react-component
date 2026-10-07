@@ -1,0 +1,1247 @@
+{
+  "completedDate": "2026-10-08",
+  "measurementKind": "Desktop ego-browser emulation; not a physical mobile device",
+  "hardware": "Macmini9,1",
+  "macOS": "27.0.1",
+  "cpuThrottlingRate": 4,
+  "viewport": [
+    390,
+    844
+  ],
+  "deviceScaleFactor": 2,
+  "baselineRevision": "e79e324 (preserved reusable-component changes; verified against baseline source hashes)",
+  "sourceHashes": {
+    "paperSurface.js": {
+      "before": "976cfa80c642dc58d33c26691970c9dc58e294cc6b5218693d4bde1b5d223b77",
+      "after": "bbf23b05497e062d8b91bc0e07acaf6d42e3d08b1a90eb69620ecb6bb04d0d23"
+    },
+    "tearGesture.js": {
+      "before": "bc09bdd6a710bd0aba60f4e9c4a9a5872708eecc39856568ab8543e9807dfbff",
+      "after": "27be0538d21599b14f201df53fb0a689631e68a19e1b2a2a872f2e7bc8e2befe"
+    },
+    "VirtualPrinter.jsx": {
+      "before": "fae33fb7ea964389f54ec0250d3ecd5addbfa3d89c9a60334c0af36f8e10535d",
+        "after": "8646a348a5baf51f08e5de1c934685e6e1e79bc2356d6ef68ad46f64ac1aa795"
+    },
+    "VirtualPrinter.css": {
+      "before": "f2c32002f70d6eaae2a9d24af538e5241ffa9ad01908592925c88c77c253ba61",
+      "after": "9c654e6e778b3097e24b3f6da078c532484ac7be8a38777b11c9161ddcfdc711"
+    }
+  },
+  "renderer": {
+    "before": {
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+        "viewport": [
+          390,
+          844
+        ],
+        "dpr": 1
+      },
+      "rafIntervalMs": {
+        "samples": 4,
+        "p50": 1000,
+        "p95": 1000,
+        "max": 1000
+      },
+      "results": [
+        {
+          "orientation": "front",
+          "long": false,
+          "scrollable": false,
+          "width": 300,
+          "height": 240,
+          "paintMs": {
+            "samples": 36,
+            "p50": 3.8999999910593033,
+            "p95": 4.700000002980232,
+            "max": 6.9000000059604645
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 52,
+            "p95": 55.8999999910593,
+            "max": 57.20000000298023
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 384,
+            "p95": 384,
+            "max": 384
+          },
+          "pixels": 1103104
+        },
+        {
+          "orientation": "front",
+          "long": false,
+          "scrollable": true,
+          "width": 300,
+          "height": 240,
+          "paintMs": {
+            "samples": 36,
+            "p50": 2.7999999970197678,
+            "p95": 3.7999999970197678,
+            "max": 4
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 41,
+            "p95": 43.70000000298023,
+            "max": 50.30000001192093
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 384,
+            "p95": 384,
+            "max": 384
+          },
+          "pixels": 1103104
+        },
+        {
+          "orientation": "front",
+          "long": true,
+          "scrollable": false,
+          "width": 300,
+          "height": 6000,
+          "paintMs": {
+            "samples": 36,
+            "p50": 9.200000002980232,
+            "p95": 17.799999997019768,
+            "max": 33.20000000298023
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 262.70000000298023,
+            "p95": 288.6000000089407,
+            "max": 290
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 1274,
+            "p95": 1274,
+            "max": 1274
+          },
+          "pixels": 3997968
+        },
+        {
+          "orientation": "front",
+          "long": true,
+          "scrollable": true,
+          "width": 300,
+          "height": 6000,
+          "paintMs": {
+            "samples": 36,
+            "p50": 2,
+            "p95": 10.599999994039536,
+            "max": 17.30000001192093
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 22.200000002980232,
+            "p95": 66.6000000089407,
+            "max": 72.1000000089407
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 224,
+            "p95": 224,
+            "max": 224
+          },
+          "pixels": 3997968
+        },
+        {
+          "orientation": "up",
+          "long": false,
+          "scrollable": false,
+          "width": 214,
+          "height": 240,
+          "paintMs": {
+            "samples": 36,
+            "p50": 2.7000000029802322,
+            "p95": 5.800000011920929,
+            "max": 6.299999997019768
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 38.599999994039536,
+            "p95": 42.3999999910593,
+            "max": 45.400000005960464
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 384,
+            "p95": 384,
+            "max": 384
+          },
+          "pixels": 1110240
+        },
+        {
+          "orientation": "up",
+          "long": false,
+          "scrollable": true,
+          "width": 214,
+          "height": 240,
+          "paintMs": {
+            "samples": 36,
+            "p50": 3.0999999940395355,
+            "p95": 5.100000008940697,
+            "max": 7.600000008940697
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 40,
+            "p95": 52.400000005960464,
+            "max": 67.09999999403954
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 384,
+            "p95": 384,
+            "max": 384
+          },
+          "pixels": 1110240
+        },
+        {
+          "orientation": "up",
+          "long": true,
+          "scrollable": false,
+          "width": 214,
+          "height": 6000,
+          "paintMs": {
+            "samples": 36,
+            "p50": 11.299999997019768,
+            "p95": 17.5,
+            "max": 20
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 254.70000000298023,
+            "p95": 301.40000000596046,
+            "max": 321.3999999910593
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 1274,
+            "p95": 1274,
+            "max": 1274
+          },
+          "pixels": 3997571
+        },
+        {
+          "orientation": "up",
+          "long": true,
+          "scrollable": true,
+          "width": 214,
+          "height": 6000,
+          "paintMs": {
+            "samples": 36,
+            "p50": 0.6000000089406967,
+            "p95": 1.1000000089406967,
+            "max": 1.5
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 4.5,
+            "p95": 4.899999991059303,
+            "max": 5.0999999940395355
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 242,
+            "p95": 242,
+            "max": 242
+          },
+          "pixels": 3997571
+        }
+      ]
+    },
+    "after": {
+      "environment": {
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+        "viewport": [
+          390,
+          844
+        ],
+        "dpr": 1
+      },
+      "rafIntervalMs": {
+        "samples": 3,
+        "p50": 999.8999999999996,
+        "p95": 1016.5,
+        "max": 1016.5
+      },
+      "results": [
+        {
+          "orientation": "front",
+          "long": false,
+          "scrollable": false,
+          "width": 300,
+          "height": 240,
+          "paintMs": {
+            "samples": 36,
+            "p50": 0.3999999910593033,
+            "p95": 0.5999999940395355,
+            "max": 0.699999988079071
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 4.199999988079071,
+            "p95": 4.5,
+            "max": 4.799999997019768
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 119,
+            "p95": 119,
+            "max": 119
+          },
+          "pixels": 275776
+        },
+        {
+          "orientation": "front",
+          "long": false,
+          "scrollable": true,
+          "width": 300,
+          "height": 240,
+          "paintMs": {
+            "samples": 36,
+            "p50": 0.4000000059604645,
+            "p95": 0.699999988079071,
+            "max": 0.7999999970197678
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 4.200000002980232,
+            "p95": 4.799999997019768,
+            "max": 5
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 119,
+            "p95": 119,
+            "max": 119
+          },
+          "pixels": 275776
+        },
+        {
+          "orientation": "front",
+          "long": true,
+          "scrollable": false,
+          "width": 300,
+          "height": 6000,
+          "paintMs": {
+            "samples": 36,
+            "p50": 0.699999988079071,
+            "p95": 0.8999999910593033,
+            "max": 1.199999988079071
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 39.29999999701977,
+            "p95": 40.6000000089407,
+            "max": 44.80000001192093
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 209,
+            "p95": 209,
+            "max": 209
+          },
+          "pixels": 3478336
+        },
+        {
+          "orientation": "front",
+          "long": true,
+          "scrollable": true,
+          "width": 300,
+          "height": 6000,
+          "paintMs": {
+            "samples": 36,
+            "p50": 0.4000000059604645,
+            "p95": 0.6000000089406967,
+            "max": 0.6000000089406967
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 4.399999991059303,
+            "p95": 4.5999999940395355,
+            "max": 4.600000008940697
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 131,
+            "p95": 131,
+            "max": 131
+          },
+          "pixels": 286896
+        },
+        {
+          "orientation": "up",
+          "long": false,
+          "scrollable": false,
+          "width": 214,
+          "height": 240,
+          "paintMs": {
+            "samples": 36,
+            "p50": 0.3999999910593033,
+            "p95": 0.5,
+            "max": 0.7000000029802322
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 3.0999999940395355,
+            "p95": 3.2999999970197678,
+            "max": 3.3999999910593033
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 119,
+            "p95": 119,
+            "max": 119
+          },
+          "pixels": 277560
+        },
+        {
+          "orientation": "up",
+          "long": false,
+          "scrollable": true,
+          "width": 214,
+          "height": 240,
+          "paintMs": {
+            "samples": 36,
+            "p50": 0.30000001192092896,
+            "p95": 0.5,
+            "max": 0.5
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 3.0999999940395355,
+            "p95": 3.2999999970197678,
+            "max": 3.3999999910593033
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 119,
+            "p95": 119,
+            "max": 119
+          },
+          "pixels": 277560
+        },
+        {
+          "orientation": "up",
+          "long": true,
+          "scrollable": false,
+          "width": 214,
+          "height": 6000,
+          "paintMs": {
+            "samples": 36,
+            "p50": 0.9000000059604645,
+            "p95": 1.1000000089406967,
+            "max": 1.2000000029802322
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 28.200000002980232,
+            "p95": 33.70000000298023,
+            "max": 34.20000000298023
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 209,
+            "p95": 209,
+            "max": 209
+          },
+          "pixels": 3238200
+        },
+        {
+          "orientation": "up",
+          "long": true,
+          "scrollable": true,
+          "width": 214,
+          "height": 6000,
+          "paintMs": {
+            "samples": 36,
+            "p50": 1.2999999970197678,
+            "p95": 2.5,
+            "max": 2.5999999940395355
+          },
+          "rasterFenceMs": {
+            "samples": 36,
+            "p50": 11.699999988079071,
+            "p95": 13.799999997019768,
+            "max": 14.200000002980232
+          },
+          "draws": {
+            "samples": 36,
+            "p50": 131,
+            "p95": 131,
+            "max": 131
+          },
+          "pixels": 287840
+        }
+      ]
+    }
+  },
+  "interactions": {
+    "before": {
+      "shadow": true,
+      "repeats": 3,
+      "results": [
+        {
+          "orientation": "front",
+          "long": false,
+          "scrollable": false,
+          "paintMs": {
+            "samples": 90,
+            "p50": 1.5,
+            "p95": 2,
+            "max": 3.2000000029802322
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 87,
+            "p50": 34.900000005960464,
+            "p95": 42.099999994039536,
+            "max": 42.6000000089407
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 937,
+            "p95": 938.5,
+            "max": 938.5
+          },
+          "drawCounts": {
+            "samples": 90,
+            "p50": 600,
+            "p95": 606,
+            "max": 606
+          },
+          "canvasPixels": {
+            "samples": 90,
+            "p50": 1386072,
+            "p95": 1386072,
+            "max": 1386072
+          },
+          "detachedPaints": 52
+        },
+        {
+          "orientation": "front",
+          "long": false,
+          "scrollable": true,
+          "paintMs": {
+            "samples": 135,
+            "p50": 1,
+            "p95": 1.3999999910593033,
+            "max": 1.8999999910593033
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 132,
+            "p50": 16.700000002980232,
+            "p95": 41.79999999701977,
+            "max": 42.1000000089407
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 942.7999999970198,
+            "p95": 944.3000000119209,
+            "max": 944.3000000119209
+          },
+          "drawCounts": {
+            "samples": 135,
+            "p50": 422,
+            "p95": 428,
+            "max": 428
+          },
+          "canvasPixels": {
+            "samples": 135,
+            "p50": 1386072,
+            "p95": 1386072,
+            "max": 1386072
+          },
+          "detachedPaints": 84
+        },
+        {
+          "orientation": "front",
+          "long": true,
+          "scrollable": false,
+          "paintMs": {
+            "samples": 33,
+            "p50": 2.800000011920929,
+            "p95": 6,
+            "max": 6.700000002980232
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 30,
+            "p50": 88.8999999910593,
+            "p95": 96.80000001192093,
+            "max": 104.20000000298023
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 958,
+            "p95": 963.5,
+            "max": 963.5
+          },
+          "drawCounts": {
+            "samples": 33,
+            "p50": 1358,
+            "p95": 1364,
+            "max": 1364
+          },
+          "canvasPixels": {
+            "samples": 33,
+            "p50": 3998664,
+            "p95": 3998664,
+            "max": 3998664
+          },
+          "detachedPaints": 18
+        },
+        {
+          "orientation": "front",
+          "long": true,
+          "scrollable": true,
+          "paintMs": {
+            "samples": 78,
+            "p50": 0.9000000059604645,
+            "p95": 1.2000000029802322,
+            "max": 1.2999999970197678
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 75,
+            "p50": 34.29999999701977,
+            "p95": 39.20000000298023,
+            "max": 41.1000000089407
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 939.5,
+            "p95": 948.8000000119209,
+            "max": 948.8000000119209
+          },
+          "drawCounts": {
+            "samples": 78,
+            "p50": 292,
+            "p95": 294,
+            "max": 294
+          },
+          "canvasPixels": {
+            "samples": 78,
+            "p50": 3996531,
+            "p95": 3996531,
+            "max": 3996531
+          },
+          "detachedPaints": 48
+        },
+        {
+          "orientation": "up",
+          "long": false,
+          "scrollable": false,
+          "paintMs": {
+            "samples": 136,
+            "p50": 1.2999999970197678,
+            "p95": 1.5999999940395355,
+            "max": 2.1000000089406967
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 133,
+            "p50": 16.700000002980232,
+            "p95": 42.20000000298023,
+            "max": 42.70000000298023
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 928.4000000059605,
+            "p95": 946.5999999940395,
+            "max": 946.5999999940395
+          },
+          "drawCounts": {
+            "samples": 136,
+            "p50": 528,
+            "p95": 538,
+            "max": 538
+          },
+          "canvasPixels": {
+            "samples": 136,
+            "p50": 1023672,
+            "p95": 1023672,
+            "max": 1023672
+          },
+          "detachedPaints": 85
+        },
+        {
+          "orientation": "up",
+          "long": false,
+          "scrollable": true,
+          "paintMs": {
+            "samples": 110,
+            "p50": 1.0999999940395355,
+            "p95": 1.2999999970197678,
+            "max": 1.6000000089406967
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 107,
+            "p50": 17.19999998807907,
+            "p95": 41.900000005960464,
+            "max": 42.599999994039536
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 942.7999999970198,
+            "p95": 947.5999999940395,
+            "max": 947.5999999940395
+          },
+          "drawCounts": {
+            "samples": 110,
+            "p50": 418,
+            "p95": 428,
+            "max": 428
+          },
+          "canvasPixels": {
+            "samples": 110,
+            "p50": 1023672,
+            "p95": 1023672,
+            "max": 1023672
+          },
+          "detachedPaints": 68
+        },
+        {
+          "orientation": "up",
+          "long": true,
+          "scrollable": false,
+          "paintMs": {
+            "samples": 39,
+            "p50": 2.9000000059604645,
+            "p95": 4.399999991059303,
+            "max": 7.700000002980232
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 36,
+            "p50": 75.69999998807907,
+            "p95": 81.09999999403954,
+            "max": 85.19999998807907
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 965.2999999970198,
+            "p95": 997.7999999970198,
+            "max": 997.7999999970198
+          },
+          "drawCounts": {
+            "samples": 39,
+            "p50": 1484,
+            "p95": 1490,
+            "max": 1490
+          },
+          "canvasPixels": {
+            "samples": 39,
+            "p50": 3997992,
+            "p95": 3997992,
+            "max": 3997992
+          },
+          "detachedPaints": 24
+        },
+        {
+          "orientation": "up",
+          "long": true,
+          "scrollable": true,
+          "paintMs": {
+            "samples": 76,
+            "p50": 1.0999999940395355,
+            "p95": 1.300000011920929,
+            "max": 1.6000000089406967
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 73,
+            "p50": 34.70000000298023,
+            "p95": 41.8999999910593,
+            "max": 42.400000005960464
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 936.4000000059605,
+            "p95": 957.1000000089407,
+            "max": 957.1000000089407
+          },
+          "drawCounts": {
+            "samples": 76,
+            "p50": 400,
+            "p95": 406,
+            "max": 406
+          },
+          "canvasPixels": {
+            "samples": 76,
+            "p50": 3997992,
+            "p95": 3997992,
+            "max": 3997992
+          },
+          "detachedPaints": 46
+        }
+      ]
+    },
+    "after": {
+      "shadow": true,
+      "repeats": 3,
+      "results": [
+        {
+          "orientation": "front",
+          "long": false,
+          "scrollable": false,
+          "paintMs": {
+            "samples": 55,
+            "p50": 0.7000000029802322,
+            "p95": 1.4000000059604645,
+            "max": 1.7000000029802322
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 52,
+            "p50": 16.700000002980232,
+            "p95": 36.70000000298023,
+            "max": 41.70000000298023
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 946.3000000119209,
+            "p95": 1126.2000000029802,
+            "max": 1126.2000000029802
+          },
+          "drawCounts": {
+            "samples": 55,
+            "p50": 179,
+            "p95": 179,
+            "max": 179
+          },
+          "canvasPixels": {
+            "samples": 55,
+            "p50": 1384956,
+            "p95": 1384956,
+            "max": 1384956
+          },
+          "detachedPaints": 4,
+          "cachedFlightPaints": 0
+        },
+        {
+          "orientation": "front",
+          "long": false,
+          "scrollable": true,
+          "paintMs": {
+            "samples": 51,
+            "p50": 0.5999999940395355,
+            "p95": 0.7999999970197678,
+            "max": 1.1000000089406967
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 48,
+            "p50": 16.799999997019768,
+            "p95": 34.20000000298023,
+            "max": 34.5
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 1122.9000000059605,
+            "p95": 1136.0999999940395,
+            "max": 1136.0999999940395
+          },
+          "drawCounts": {
+            "samples": 51,
+            "p50": 131,
+            "p95": 131,
+            "max": 131
+          },
+          "canvasPixels": {
+            "samples": 51,
+            "p50": 1151712,
+            "p95": 1151712,
+            "max": 1151712
+          },
+          "detachedPaints": 3,
+          "cachedFlightPaints": 0
+        },
+        {
+          "orientation": "front",
+          "long": true,
+          "scrollable": false,
+          "paintMs": {
+            "samples": 30,
+            "p50": 0.7000000029802322,
+            "p95": 0.9000000059604645,
+            "max": 1
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 27,
+            "p50": 40.19999998807907,
+            "p95": 40.8999999910593,
+            "max": 41
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 1133.2000000029802,
+            "p95": 1134.9000000059605,
+            "max": 1134.9000000059605
+          },
+          "drawCounts": {
+            "samples": 30,
+            "p50": 207,
+            "p95": 207,
+            "max": 207
+          },
+          "canvasPixels": {
+            "samples": 30,
+            "p50": 3998664,
+            "p95": 3998664,
+            "max": 3998664
+          },
+          "detachedPaints": 3,
+          "cachedFlightPaints": 0
+        },
+        {
+          "orientation": "front",
+          "long": true,
+          "scrollable": true,
+          "paintMs": {
+            "samples": 33,
+            "p50": 0.5999999940395355,
+            "p95": 0.7000000029802322,
+            "max": 0.800000011920929
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 30,
+            "p50": 34.30000001192093,
+            "p95": 40.80000001192093,
+            "max": 41.19999998807907
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 1751.7999999970198,
+            "p95": 1826.2000000029802,
+            "max": 1826.2000000029802
+          },
+          "drawCounts": {
+            "samples": 33,
+            "p50": 131,
+            "p95": 131,
+            "max": 131
+          },
+          "canvasPixels": {
+            "samples": 33,
+            "p50": 866360,
+            "p95": 866360,
+            "max": 866360
+          },
+          "detachedPaints": 3,
+          "cachedFlightPaints": 0
+        },
+        {
+          "orientation": "up",
+          "long": false,
+          "scrollable": false,
+          "paintMs": {
+            "samples": 64,
+            "p50": 0.6000000089406967,
+            "p95": 0.8999999910593033,
+            "max": 0.9000000059604645
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 61,
+            "p50": 16.69999998807907,
+            "p95": 17.700000002980232,
+            "max": 32.400000005960464
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 945.6999999880791,
+            "p95": 950.5,
+            "max": 950.5
+          },
+          "drawCounts": {
+            "samples": 64,
+            "p50": 156,
+            "p95": 156,
+            "max": 156
+          },
+          "canvasPixels": {
+            "samples": 64,
+            "p50": 1023672,
+            "p95": 1023672,
+            "max": 1023672
+          },
+          "detachedPaints": 3,
+          "cachedFlightPaints": 0
+        },
+        {
+          "orientation": "up",
+          "long": false,
+          "scrollable": true,
+          "paintMs": {
+            "samples": 64,
+            "p50": 0.5,
+            "p95": 0.800000011920929,
+            "max": 1
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 61,
+            "p50": 16.69999998807907,
+            "p95": 17.700000002980232,
+            "max": 30.700000002980232
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 936.7999999970198,
+            "p95": 940.9000000059605,
+            "max": 940.9000000059605
+          },
+          "drawCounts": {
+            "samples": 64,
+            "p50": 131,
+            "p95": 131,
+            "max": 131
+          },
+          "canvasPixels": {
+            "samples": 64,
+            "p50": 915824,
+            "p95": 915824,
+            "max": 915824
+          },
+          "detachedPaints": 4,
+          "cachedFlightPaints": 0
+        },
+        {
+          "orientation": "up",
+          "long": true,
+          "scrollable": false,
+          "paintMs": {
+            "samples": 33,
+            "p50": 0.5999999940395355,
+            "p95": 1,
+            "max": 1
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 30,
+            "p50": 33.5,
+            "p95": 34,
+            "max": 34
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 1146.4000000059605,
+            "p95": 1148.5,
+            "max": 1148.5
+          },
+          "drawCounts": {
+            "samples": 33,
+            "p50": 207,
+            "p95": 207,
+            "max": 207
+          },
+          "canvasPixels": {
+            "samples": 33,
+            "p50": 3997992,
+            "p95": 3997992,
+            "max": 3997992
+          },
+          "detachedPaints": 3,
+          "cachedFlightPaints": 0
+        },
+        {
+          "orientation": "up",
+          "long": true,
+          "scrollable": true,
+          "paintMs": {
+            "samples": 33,
+            "p50": 0.5,
+            "p95": 0.7000000029802322,
+            "max": 0.7999999970197678
+          },
+          "canvasPaintIntervalMs": {
+            "samples": 30,
+            "p50": 34.5,
+            "p95": 39.70000000298023,
+            "max": 42.20000000298023
+          },
+          "durationMs": {
+            "samples": 3,
+            "p50": 1140.2000000029802,
+            "p95": 1141.3999999910593,
+            "max": 1141.3999999910593
+          },
+          "drawCounts": {
+            "samples": 33,
+            "p50": 131,
+            "p95": 131,
+            "max": 131
+          },
+          "canvasPixels": {
+            "samples": 33,
+            "p50": 915824,
+            "p95": 915824,
+            "max": 915824
+          },
+          "detachedPaints": 3,
+          "cachedFlightPaints": 0
+        }
+      ]
+    }
+  },
+  "pairedTabletopScroll": [
+    {
+      "before": {
+        "orientation": "up",
+        "long": true,
+        "scrollable": true,
+        "width": 214,
+        "height": 6000,
+        "paintMs": {
+          "samples": 36,
+          "p50": 0.5999999940395355,
+          "p95": 0.800000011920929,
+          "max": 0.9000000059604645
+        },
+        "rasterFenceMs": {
+          "samples": 36,
+          "p50": 4.4000000059604645,
+          "p95": 4.899999991059303,
+          "max": 4.9000000059604645
+        },
+        "draws": {
+          "samples": 36,
+          "p50": 242,
+          "p95": 242,
+          "max": 242
+        },
+        "pixels": 3997571
+      },
+      "after": {
+        "orientation": "up",
+        "long": true,
+        "scrollable": true,
+        "width": 214,
+        "height": 6000,
+        "paintMs": {
+          "samples": 36,
+          "p50": 1.1000000089406967,
+          "p95": 2.4000000059604645,
+          "max": 2.5
+        },
+        "rasterFenceMs": {
+          "samples": 36,
+          "p50": 10.799999997019768,
+          "p95": 15.5,
+          "max": 16
+        },
+        "draws": {
+          "samples": 36,
+          "p50": 131,
+          "p95": 131,
+          "max": 131
+        },
+        "pixels": 287840
+      }
+    },
+    {
+      "before": {
+        "orientation": "up",
+        "long": true,
+        "scrollable": true,
+        "width": 214,
+        "height": 6000,
+        "paintMs": {
+          "samples": 36,
+          "p50": 3.1000000089406967,
+          "p95": 5.9000000059604645,
+          "max": 6.799999997019768
+        },
+        "rasterFenceMs": {
+          "samples": 36,
+          "p50": 16.799999997019768,
+          "p95": 23.399999991059303,
+          "max": 24.799999997019768
+        },
+        "draws": {
+          "samples": 36,
+          "p50": 242,
+          "p95": 242,
+          "max": 242
+        },
+        "pixels": 3997571
+      },
+      "after": {
+        "orientation": "up",
+        "long": true,
+        "scrollable": true,
+        "width": 214,
+        "height": 6000,
+        "paintMs": {
+          "samples": 36,
+          "p50": 1.2999999970197678,
+          "p95": 1.8999999910593033,
+          "max": 2.2999999970197678
+        },
+        "rasterFenceMs": {
+          "samples": 36,
+          "p50": 12.5,
+          "p95": 16.19999998807907,
+          "max": 17.299999997019768
+        },
+        "draws": {
+          "samples": 36,
+          "p50": 131,
+          "p95": 131,
+          "max": 131
+        },
+        "pixels": 287840
+      }
+    },
+    {
+      "before": {
+        "orientation": "up",
+        "long": true,
+        "scrollable": true,
+        "width": 214,
+        "height": 6000,
+        "paintMs": {
+          "samples": 36,
+          "p50": 2.1000000089406967,
+          "p95": 3.7000000029802322,
+          "max": 6.700000002980232
+        },
+        "rasterFenceMs": {
+          "samples": 36,
+          "p50": 17,
+          "p95": 19.799999997019768,
+          "max": 34.79999999701977
+        },
+        "draws": {
+          "samples": 36,
+          "p50": 242,
+          "p95": 242,
+          "max": 242
+        },
+        "pixels": 3997571
+      },
+      "after": {
+        "orientation": "up",
+        "long": true,
+        "scrollable": true,
+        "width": 214,
+        "height": 6000,
+        "paintMs": {
+          "samples": 36,
+          "p50": 1.4000000059604645,
+          "p95": 2.5,
+          "max": 3.2000000029802322
+        },
+        "rasterFenceMs": {
+          "samples": 36,
+          "p50": 14,
+          "p95": 17.900000005960464,
+          "max": 19.5
+        },
+        "draws": {
+          "samples": 36,
+          "p50": 131,
+          "p95": 131,
+          "max": 131
+        },
+        "pixels": 287840
+      }
+    }
+  ]
+}

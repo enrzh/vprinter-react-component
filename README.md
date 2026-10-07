@@ -35,6 +35,9 @@ Each print is captured as one bitmap containing the paper, text, logos and codes
 The same surface feeds, bends and tears, so the text follows the paper exactly.
 It refreshes when the layout changes, retains accessible DOM content, and falls
 back to the complete DOM sheet if browser capture fails.
+In scroll mode the animated canvas covers only the visible paper and movement
+padding. After the cutter releases it, the rendered sheet falls using native
+transforms and opacity, with a frame-clock fallback when needed.
 Printing feeds the existing text through the slot, bottom first for Front feed
 and top first for Tabletop, with synchronized paper and printer movement. A
 subtle curl catches the light along the free edge as the paper feeds.
@@ -297,6 +300,11 @@ tear-off animations. A structured receipt with invalid items, tax, or payment da
 stays on screen and shows the reason, instead of blanking the surrounding page.
 
 ## Build and deployment
+
+Performance measurements, the eight-case comparison and device limitations are
+documented in [Paper tearing performance](docs/tear-performance.md). Run the
+reproducible harness at `/benchmarks/paper-tearing.html` with `pnpm dev`.
+Desktop emulation results do not establish a physical phone's frame rate.
 
 ### Check the installed package in another app
 
