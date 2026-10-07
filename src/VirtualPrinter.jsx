@@ -4,13 +4,13 @@ import { encode } from 'uqr';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
 import { parsePrinterMarkup } from './printerMarkup.js';
 import { normalizeTicket } from './simpleTicket.js';
-import { tearAxis, tearThreshold, tearTravel } from './tearGesture.js';
+import { tearAxis, tearThreshold, tearTravel, tearMotion, tearFrame, tearFlight, stepPaperSpring, feedDuration } from './tearGesture.js';
+import { rasterizePaper, paintPaper } from './paperSurface.js';
 import './VirtualPrinter.css';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 const PRINT_FALLBACK_MS = 3400;
 const TEAR_FALLBACK_MS = 900;
-const TEAR_STYLE = ['--vp-drag-x', '--vp-drag-y', '--vp-drag-rotate', '--vp-tear-x', '--vp-tear-y', '--vp-tear-rotate', '--vp-rip'];
 
 function PrinterIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -21,7 +21,7 @@ function PrinterIcon() {
 
 function Barcode({ value }) {
   const element = useRef(null);
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     JsBarcode(element.current, value, {
       format: 'CODE128', displayValue: false, height: 34, width: 2,
       margin: 10, background: '#171717', lineColor: '#ffffff',
@@ -154,6 +154,12 @@ export function VirtualPrinter({
   const printButton = useRef(null);
   const paperScroll = useRef(null);
   const drag = useRef(null);
+  const flex = useRef(null);
+  const flexFrame = useRef(0);
+  const flexTimer = useRef(0);
+  const surfaceCanvas = useRef(null);
+  const bitmap = useRef(null);
+  const [preparingPaper, setPreparingPaper] = useState(false);
   const previousResetKey = useRef(resetKey);
   const previousPhase = useRef(initiallyPrinted ? 'printed' : 'ready');
   const [job, setJob] = useState(() => ({
@@ -205,23 +211,118 @@ export function VirtualPrinter({
 
   useIsomorphicLayoutEffect(() => {
     if (previousResetKey.current === resetKey) return;
+    stopFlex();
     previousResetKey.current = resetKey;
     drag.current = null;
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
     paperScroll.current?.removeAttribute('data-tear-axis');
-    for (const property of TEAR_STYLE) paperScroll.current?.style.removeProperty(property);
-    paperScroll.current?.style.removeProperty('transition');
-    paperScroll.current?.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
-    paperScroll.current?.parentElement?.style.removeProperty('--vp-pull');
+    paperScroll.current?.parentElement?.style.removeProperty('--vp-tear-time');
     nextId.current = 0;
     setJob(current => ({ ...current, id: 0, phase: 'ready' }));
   }, [resetKey]);
 
   useIsomorphicLayoutEffect(() => {
+    const paper = paperScroll.current?.querySelector('.vp-paper');
+    const markup = paper?.querySelector('.vp-markup-content');
+    if (!markup || tearing) return;
+    let lastWidth = 0, lastFont = 0, frame = 0;
+    const fitText = () => {
+      const width = markup.clientWidth;
+      const baseFont = parseFloat(getComputedStyle(paper).fontSize);
+      if (width <= 1 || !Number.isFinite(baseFont) || (width === lastWidth && baseFont === lastFont)) return;
+      lastWidth = width;
+      lastFont = baseFont;
+      markup.style.fontSize = `${baseFont}px`;
+      let widest = width;
+      for (const line of markup.children) widest = Math.max(widest, line.scrollWidth);
+      if (widest > width) markup.style.fontSize = `${baseFont * (width - 1) / widest}px`;
+    };
+    fitText();
+    if (typeof ResizeObserver === 'undefined') return;
+    // Fitting changes the observed height; defer resize writes to avoid observer loops.
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fitText);
+    });
+    observer.observe(paper);
+    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
+  }, [source.content, logo, orientation, job.id, job.phase]);
+
+  useIsomorphicLayoutEffect(() => {
+    const article = paperScroll.current?.querySelector('.vp-paper');
+    const canvas = surfaceCanvas.current;
+    if (job.phase === 'ready' || !article) {
+      setPreparingPaper(false);
+      return;
+    }
+    try {
+      if (!canvas.getContext('2d')) { setPreparingPaper(false); return; }
+    } catch { setPreparingPaper(false); return; }
+    let cancelled = false, version = 0, frame = 0, dimensions = '';
+    const refresh = async () => {
+      const next = `${article.offsetWidth}:${article.offsetHeight}`;
+      if (cancelled || !article.offsetWidth || !article.offsetHeight || dimensions === next) return;
+      dimensions = next;
+      const currentVersion = ++version;
+      drag.current = null;
+      stopFlex();
+      article.removeAttribute('data-raster-ready');
+      if (bitmap.current) bitmap.current.texture.width = 0;
+      bitmap.current = null;
+      setPreparingPaper(article.closest('.vp').dataset.phase === 'printing');
+      // Slow or inaccessible assets must not leave printing stuck.
+      const timer = window.setTimeout(() => {
+        if (!cancelled && currentVersion === version) { version++; setPreparingPaper(false); }
+      }, 5000);
+      try {
+        const result = await rasterizePaper(article);
+        if (cancelled || currentVersion !== version) { result.texture.width = 0; return; }
+        bitmap.current = result;
+        paintPaper(canvas, result, flex.current || { direction: orientation === 'up' ? -1 : 1 });
+        article.dataset.rasterReady = 'true';
+      } catch {
+        // Keep the complete DOM sheet visible when browser capture is unavailable.
+        if (!cancelled && currentVersion === version) {
+          if (bitmap.current) bitmap.current.texture.width = 0;
+          bitmap.current = null;
+          article.removeAttribute('data-raster-ready');
+          canvas.width = canvas.height = 1;
+        }
+      } finally {
+        window.clearTimeout(timer);
+        if (!cancelled && currentVersion === version) setPreparingPaper(false);
+      }
+    };
+    refresh();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(refresh);
+    });
+    observer?.observe(article);
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+      cancelAnimationFrame(frame);
+      article.removeAttribute('data-raster-ready');
+      if (bitmap.current) bitmap.current.texture.width = 0;
+      bitmap.current = null;
+      canvas.width = canvas.height = 1;
+    };
+  }, [job.id, job.phase === 'ready', orientation, logo, source.content, source.receipt, source.ticket]);
+
+  useIsomorphicLayoutEffect(() => {
     if (!printing) return;
     const paper = paperScroll.current;
+    let measuredDuration = false;
     const updateHeight = () => {
       const printer = paper.closest('.vp');
+      if (!measuredDuration) {
+        const base = getComputedStyle(printer).getPropertyValue('--vp-feed-duration').trim();
+        const baseMs = parseFloat(base) * (base.endsWith('ms') ? 1 : 1000);
+        const height = paper.querySelector('.vp-paper').offsetHeight;
+        printer.style.setProperty('--vp-feed-time', `${feedDuration(Number.isFinite(baseMs) ? baseMs : orientation === 'front' ? 1900 : 2800, height)}ms`);
+        measuredDuration = true;
+      }
       if (orientation === 'up') printer?.style.setProperty('--vp-full-paper-height', `${paper.scrollHeight}px`);
       else {
         printer?.style.setProperty('--vp-full-paper-height', `${paper.querySelector('.vp-paper').offsetHeight}px`);
@@ -237,6 +338,126 @@ export function VirtualPrinter({
   }, [orientation, isScrollable, printing, job.id]);
 
   useIsomorphicLayoutEffect(() => {
+    if (job.phase === 'printed' && previousPhase.current === 'printing' && orientation === 'up' && isScrollable) {
+      const paper = paperScroll.current;
+      paper.scrollTop = paper.scrollHeight - paper.clientHeight;
+    }
+  }, [job.phase, orientation, isScrollable]);
+
+  useEffect(() => () => stopFlex(), []);
+  useIsomorphicLayoutEffect(() => {
+    drag.current = null;
+    paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
+    stopFlex();
+  }, [orientation, isScrollable]);
+
+  function stopFlex() {
+    cancelAnimationFrame(flexFrame.current);
+    window.clearTimeout(flexTimer.current);
+    flexFrame.current = 0;
+    flexTimer.current = 0;
+    const current = flex.current;
+    if (!current) return;
+    for (const node of [current.paper, surfaceCanvas.current?.parentElement]) {
+      node?.style.removeProperty('transform');
+      node?.style.removeProperty('opacity');
+      node?.style.removeProperty('transform-origin');
+    }
+    current.root.removeAttribute('data-flexing');
+    current.root.removeAttribute('data-dragging');
+    current.article.style.removeProperty('--vp-scroll-offset');
+    current.article.style.removeProperty('--vp-cut-top');
+    current.article.style.removeProperty('--vp-cut-bottom');
+    current.paper.style.removeProperty('--vp-viewport-height');
+    if (bitmap.current) paintPaper(surfaceCanvas.current, bitmap.current, { direction: current.direction });
+    current.paper.scrollTop = current.scrollTop;
+    flex.current = null;
+  }
+
+  function prepareFlex(gesture) {
+    stopFlex();
+    const paper = paperScroll.current;
+    const article = paper.querySelector('.vp-paper');
+    const bounds = article.getBoundingClientRect();
+    const viewport = paper.getBoundingClientRect();
+    const direction = orientation === 'up' ? -1 : 1;
+    // Measure the outlet before changing overflow; the scroll viewport stays put during a pull.
+    const anchor = Math.max(0, Math.min(bounds.height, (direction < 0 ? viewport.bottom : viewport.top) - bounds.top));
+    const start = isScrollable ? Math.max(0, viewport.top - bounds.top) : 0;
+    const end = isScrollable ? Math.min(bounds.height, viewport.bottom - bounds.top) : bounds.height;
+    const lever = Math.max(48, Math.abs(gesture.y - bounds.top - anchor));
+    const grip = bounds.width ? Math.max(0, Math.min(1, ((gesture.x ?? bounds.left + bounds.width / 2) - bounds.left) / bounds.width)) : .5;
+    const root = paper.closest('.vp');
+    paper.style.setProperty('--vp-viewport-height', `${viewport.height}px`);
+    article.style.setProperty('--vp-scroll-offset', `${-gesture.scrollTop}px`);
+    root.dataset.flexing = 'true';
+    flex.current = { paper, article, root, width: bounds.width, height: bounds.height, anchor, start, end, lever, grip, direction,
+      scrollTop: gesture.scrollTop, x: 0, y: 0, vx: 0, vy: 0, targetX: 0, targetY: 0, last: performance.now() };
+    paintFlex();
+  }
+
+  function paintFlex() {
+    const current = flex.current;
+    if (!current) return;
+    if (bitmap.current) paintPaper(surfaceCanvas.current, bitmap.current, current);
+  }
+
+  function animateFlex() {
+    const now = performance.now();
+    cancelAnimationFrame(flexFrame.current);
+    window.clearTimeout(flexTimer.current);
+    flexFrame.current = 0;
+    flexTimer.current = 0;
+    const current = flex.current;
+    if (!current) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      requestFlexFrame();
+      return;
+    }
+    if (current.tearAt) {
+      current.tearProgress = (now - current.tearAt) / current.tearDuration;
+      if (current.tearProgress >= 1) { finishTear(); return; }
+      const motion = tearFrame(current.tearProgress);
+      current.targetX = current.tearPullX * (1 - motion.release * .85) - current.tearSide * motion.flutter * 7;
+      current.targetY = current.tearPullY * (1 - motion.release);
+      const flight = tearFlight(current.tearProgress, current.tearMotion);
+      const target = bitmap.current ? surfaceCanvas.current.parentElement : current.paper;
+      target.style.transformOrigin = `${current.width * current.grip}px ${bitmap.current ? current.anchor : current.direction > 0 ? 0 : current.paper.clientHeight}px`;
+      target.style.transform = `translate(${flight.x}px, ${flight.y}px) rotate(${flight.rotation}deg)`;
+      target.style.opacity = flight.opacity;
+    }
+    const dt = (now - current.last) / 1000;
+    current.last = now;
+    const x = stepPaperSpring(current.x, current.vx, current.targetX, dt);
+    const y = stepPaperSpring(current.y, current.vy, current.targetY, dt);
+    current.x = x.value; current.vx = x.velocity;
+    current.y = y.value; current.vy = y.velocity;
+    paintFlex();
+    const settled = Math.abs(current.x - current.targetX) + Math.abs(current.y - current.targetY) < .1 && Math.abs(current.vx) + Math.abs(current.vy) < 1;
+    if (!settled || current.tearAt) requestFlexFrame(true);
+    else if (!drag.current) stopFlex();
+  }
+
+  function requestFlexFrame(continuing = false) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const current = flex.current;
+      current.x = current.targetX;
+      current.y = current.targetY;
+      current.vx = 0;
+      current.vy = 0;
+      paintFlex();
+      if (!drag.current) stopFlex();
+      return;
+    }
+    if (!flexFrame.current) {
+      if (!continuing) flex.current.last = performance.now();
+      flexFrame.current = requestAnimationFrame(animateFlex);
+      // Some visible webviews throttle rAF; keep the texture in step with CSS motion.
+      if (document.visibilityState === 'visible') flexTimer.current = window.setTimeout(animateFlex, 32);
+    }
+  }
+
+  useIsomorphicLayoutEffect(() => {
     if (!tearing) return;
     // The tear animation now owns the transform. Dropping the drag flag before paint avoids a snap-back frame.
     paperScroll.current?.closest('.vp')?.removeAttribute('data-dragging');
@@ -247,17 +468,34 @@ export function VirtualPrinter({
     const root = paper?.closest('.vp');
     // Hide the sheet before the tear animation is cancelled, or it pops back to full opacity.
     if (root?.dataset.phase === 'tearing') root.dataset.phase = 'ready';
+    stopFlex();
     drag.current = null;
     root?.removeAttribute('data-dragging');
     paper?.removeAttribute('data-tear-axis');
-    paper?.style.removeProperty('transition');
-    for (const property of TEAR_STYLE) paper?.style.removeProperty(property);
-    paper?.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
-    paper?.parentElement?.style.removeProperty('--vp-pull');
+    paper?.parentElement?.style.removeProperty('--vp-tear-time');
     setJob(current => current.phase === 'tearing' ? { ...current, phase: 'ready' } : current);
   }
 
-  function startTear() {
+  function startTear(motion) {
+    if (job.phase !== 'printed') return;
+    const paper = paperScroll.current;
+    if (!flex.current) {
+      const bounds = paper.getBoundingClientRect();
+      prepareFlex({ scrollTop: paper.scrollTop, y: bounds.top + bounds.height * (orientation === 'up' ? .35 : .65) });
+      flex.current.targetX = 24;
+      flex.current.targetY = orientation === 'up' ? -6 : 6;
+    }
+    const release = motion?.duration ? motion : tearMotion(orientation, 24, .5, 0, flex.current.grip);
+    paper.parentElement.style.setProperty('--vp-tear-time', `${release.duration}ms`);
+    flex.current.tearDuration = release.duration;
+    flex.current.tearMotion = release;
+    flex.current.tearSide = Math.sign(release.x);
+    flex.current.tearPullX = flex.current.targetX;
+    flex.current.tearPullY = flex.current.targetY;
+    flex.current.article.style.setProperty('--vp-cut-top', orientation === 'front' ? `${flex.current.anchor}px` : '-100vh');
+    flex.current.article.style.setProperty('--vp-cut-bottom', orientation === 'up' ? `${flex.current.height - flex.current.anchor}px` : '-100vh');
+    flex.current.tearAt = performance.now();
+    requestFlexFrame();
     setJob(current => current.phase === 'printed' ? { ...current, phase: 'tearing' } : current);
   }
 
@@ -269,23 +507,22 @@ export function VirtualPrinter({
     const vertical = event.clientY - gesture.y;
     if (!gesture.axis) gesture.axis = tearAxis(orientation, gesture.pointerType, gesture.grip, sideways, vertical);
     if (!gesture.axis || gesture.axis === 'scroll') return 0;
+    if (!flex.current) prepareFlex(gesture);
     event.currentTarget.closest('.vp')?.setAttribute('data-dragging', 'true');
     const horizontal = gesture.axis === 'horizontal';
     const distance = Math.max(0, direction * vertical);
     const along = horizontal ? Math.abs(sideways) : distance;
     const threshold = tearThreshold(orientation, gesture.axis, event.currentTarget.clientWidth);
-    const travel = tearTravel(along, threshold);
-    const pull = horizontal ? 0 : travel;
+    const travel = Math.min(tearTravel(along, threshold), orientation === 'front' ? 72 : Math.max(110, event.currentTarget.clientWidth * .65));
     gesture.sideways = sideways;
     gesture.distance = along;
-    event.currentTarget.style.setProperty('--vp-drag-y', `${direction * pull}px`);
-    event.currentTarget.style.setProperty('--vp-rip', `${Math.min(1, along / threshold)}`);
-    if (orientation === 'up') event.currentTarget.parentElement.style.setProperty('--vp-pull', `${pull}px`);
-    const drift = horizontal
-      ? Math.sign(sideways || 0) * travel
-      : orientation === 'up' ? 0 : Math.max(-28, Math.min(28, sideways * .22));
-    event.currentTarget.style.setProperty('--vp-drag-x', `${drift}px`);
-    event.currentTarget.style.setProperty('--vp-drag-rotate', `${horizontal ? Math.max(-7, Math.min(7, drift * .04)) : orientation === 'up' ? 0 : Math.max(-5, Math.min(5, sideways * .045))}deg`);
+    const dt = Math.max(8, event.timeStamp - (gesture.lastTime || event.timeStamp));
+    gesture.vx = sideways === gesture.lastX ? (gesture.vx || 0) * Math.exp(-dt / 100) : (sideways - (gesture.lastX || 0)) / dt;
+    gesture.vy = vertical === gesture.lastY ? (gesture.vy || 0) * Math.exp(-dt / 100) : (vertical - (gesture.lastY || 0)) / dt;
+    gesture.lastX = sideways; gesture.lastY = vertical; gesture.lastTime = event.timeStamp;
+    flex.current.targetX = horizontal ? Math.sign(sideways) * travel : Math.max(-35, Math.min(35, sideways * .45));
+    flex.current.targetY = direction * Math.min(14, horizontal ? travel * .08 : travel * .35);
+    requestFlexFrame();
     return gesture.distance;
   }
 
@@ -297,33 +534,21 @@ export function VirtualPrinter({
     const paper = event.currentTarget;
     if (!gesture.axis || gesture.axis === 'scroll') {
       paper.closest('.vp')?.removeAttribute('data-dragging');
-      paper.style.removeProperty('--vp-rip');
-      paper.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
       return;
     }
     const horizontal = gesture.axis === 'horizontal';
     const threshold = tearThreshold(orientation, gesture.axis, paper.clientWidth);
     if (!cancelled && distance >= threshold) {
-      if (horizontal) {
-        const side = Math.sign(gesture.sideways || 1);
-        if (orientation === 'front') paper.dataset.tearAxis = 'horizontal';
-        paper.style.setProperty('--vp-tear-x', `${side * 300}px`);
-        paper.style.setProperty('--vp-tear-y', orientation === 'up' ? '-72px' : '72px');
-        paper.style.setProperty('--vp-tear-rotate', `${side * 8}deg`);
-      }
-      paper.style.setProperty('--vp-rip', '1');
-      paper.style.transition = 'none';
-      startTear();
+      paper.dataset.tearAxis = horizontal ? 'horizontal' : 'vertical';
+      startTear(tearMotion(orientation, gesture.sideways || 0, gesture.vx || 0, gesture.vy || 0, flex.current.grip));
       return;
     }
     paper.closest('.vp')?.removeAttribute('data-dragging');
-    paper.style.removeProperty('--vp-drag-x');
-    paper.style.removeProperty('--vp-drag-y');
-    paper.style.removeProperty('--vp-drag-rotate');
-    paper.style.removeProperty('--vp-rip');
-    paper.querySelector('.vp-paper')?.style.removeProperty('--vp-scroll-offset');
-    paper.scrollTop = gesture.scrollTop;
-    paper.parentElement.style.removeProperty('--vp-pull');
+    if (flex.current) {
+      flex.current.targetX = 0;
+      flex.current.targetY = 0;
+      requestFlexFrame();
+    }
   }
 
   useEffect(() => {
@@ -340,7 +565,8 @@ export function VirtualPrinter({
     const onMotionChange = () => { if (motion.matches) finishTear(); };
     onMotionChange();
     motion.addEventListener('change', onMotionChange);
-    const timer = window.setTimeout(finishTear, TEAR_FALLBACK_MS);
+    const duration = parseFloat(paperScroll.current?.parentElement?.style.getPropertyValue('--vp-tear-time'));
+    const timer = window.setTimeout(finishTear, Number.isFinite(duration) ? duration + 200 : TEAR_FALLBACK_MS);
     return () => { window.clearTimeout(timer); motion.removeEventListener('change', onMotionChange); };
   }, [tearing]);
 
@@ -356,15 +582,17 @@ export function VirtualPrinter({
     onMotionChange();
     motion.addEventListener('change', onMotionChange);
     // A fallback for hidden tabs or consumers overriding the animation styles.
-    const timer = window.setTimeout(finishPrint, PRINT_FALLBACK_MS);
+    const measured = parseFloat(paperScroll.current?.closest('.vp')?.style.getPropertyValue('--vp-feed-time'));
+    const timer = preparingPaper ? undefined : window.setTimeout(finishPrint, Number.isFinite(measured) ? measured + 700 : PRINT_FALLBACK_MS);
     return () => {
       window.clearTimeout(timer);
       motion.removeEventListener('change', onMotionChange);
     };
-  }, [job.id, printing]);
+  }, [job.id, printing, preparingPaper]);
 
   function printReceipt() {
     if (printing || tearing) return;
+    stopFlex();
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setJob({ id: ++nextId.current, phase: reduceMotion ? 'printed' : 'printing', receipt: hasContent || hasTicket ? null : receipt,
       content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null });
@@ -373,7 +601,8 @@ export function VirtualPrinter({
   const paperStyle = paperMaxHeight == null ? undefined : {
     '--vp-paper-height': typeof paperMaxHeight === 'number' ? `${paperMaxHeight}px` : String(paperMaxHeight),
   };
-  return <section className={`vp vp--${orientation} ${className}`} data-phase={job.phase} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label={`${orientation === 'up' ? 'Upward' : 'Front-feed'} virtual receipt printer`}>
+  return <section className={`vp vp--${orientation} ${className}`} data-phase={job.phase} data-paper-pending={preparingPaper ? 'true' : 'false'} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label={`${orientation === 'up' ? 'Upward' : 'Front-feed'} virtual receipt printer`}
+    onAnimationEnd={event => { if (event.animationName === 'vp-motor-feed' && event.target === event.currentTarget) finishPrint(); }}>
     <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true">{Tabletop && <Tabletop phase={job.phase} />}</div>
       <div className="vp-controls" role="group" aria-label="Printer controls">
@@ -394,13 +623,12 @@ export function VirtualPrinter({
         <span className="vp-sr-only">{statusText}</span>
       </div>
       <div className="vp-slot" aria-hidden="true" />
-      <div className="vp-paper-window" aria-busy={printing}
-        onAnimationEnd={event => { if (['vp-reveal', 'vp-feed-front', 'vp-feed-up-window'].includes(event.animationName) && event.target === event.currentTarget) finishPrint(); }}>
+      <div className="vp-paper-window" aria-busy={printing}>
         <div ref={paperScroll} className="vp-paper-scroll" role="region" aria-label="Receipt paper" tabIndex={job.phase === 'printed' ? 0 : undefined}
           onPointerDown={event => {
             if (drag.current || !event.isPrimary || job.phase !== 'printed') return;
-            drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: event.currentTarget.scrollTop, pointerType: event.pointerType, grip: !!event.target.closest('.vp-paper-grip') };
-            if (orientation === 'front') event.currentTarget.querySelector('.vp-paper')?.style.setProperty('--vp-scroll-offset', `${-event.currentTarget.scrollTop}px`);
+            stopFlex();
+            drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, scrollTop: event.currentTarget.scrollTop, pointerType: event.pointerType, grip: !!event.target.closest('.vp-paper-grip'), lastTime: event.timeStamp, lastX: 0, lastY: 0 };
             event.currentTarget.setPointerCapture(event.pointerId);
           }}
           onPointerMove={event => {
@@ -417,6 +645,7 @@ export function VirtualPrinter({
           }}
           onPointerUp={releasePaper}
           onPointerCancel={event => releasePaper(event, true)}
+          onLostPointerCapture={event => releasePaper(event, true)}
           onKeyDown={event => {
             if (event.target !== event.currentTarget || job.phase !== 'printed') return;
             const paper = event.currentTarget;
@@ -424,10 +653,15 @@ export function VirtualPrinter({
             if (!(event.key in offsets)) return;
             event.preventDefault();
             paper.scrollTop += offsets[event.key];
-          }}
-          onAnimationEnd={event => { if (['vp-tear', 'vp-tear-up', 'vp-tear-side'].includes(event.animationName) && event.target === event.currentTarget) finishTear(); }}>
+          }}>
         <article key={job.id} className={`vp-paper ${isMarkup ? 'vp-paper--markup' : isTicket ? 'vp-paper--ticket' : ''}`} aria-labelledby={isMarkup || isTicket ? undefined : headingId} aria-label={isMarkup || isTicket ? 'Printed document' : undefined} aria-hidden={job.phase === 'ready'}>
+          <svg className="vp-paper-surface" aria-hidden="true">
+            <foreignObject width="100%" height="100%">
+              <div className="vp-paper-plane" xmlns="http://www.w3.org/1999/xhtml"><canvas ref={surfaceCanvas} /></div>
+            </foreignObject>
+          </svg>
           <span className="vp-paper-grip" aria-hidden="true" />
+          <div className="vp-paper-content">
           {isMarkup ? <MarkupPaper content={source.content} logo={logo} /> : isTicket ? <TicketPaper ticket={source.ticket} /> : receiptView.error ? <p className="vp-receipt-error" role="alert">{receiptView.error}</p> : <>
             <header className="vp-merchant">
               <h2 id={headingId}>{receiptView.data.merchant.name}</h2>
@@ -461,6 +695,7 @@ export function VirtualPrinter({
               <p className="vp-thanks">{receiptView.data.footer}</p>
             </footer>
           </>}
+          </div>
         </article>
         </div>
       </div>

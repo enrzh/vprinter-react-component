@@ -5,11 +5,15 @@ export async function createPrinterImage(printer) {
   const sourceMarkup = printer.querySelector('.vp-markup-content');
   const extraWidth = sourceMarkup ? Math.max(0, sourceMarkup.scrollWidth - sourceMarkup.clientWidth) : 0;
   clone.setAttribute('aria-hidden', 'true');
+  clone.removeAttribute('data-dragging');
+  clone.removeAttribute('data-flexing');
+  clone.querySelector('.vp-paper')?.removeAttribute('data-raster-ready');
+  clone.querySelector('.vp-paper-surface')?.remove();
   clone.inert = true;
   clone.removeAttribute('id');
   clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
   clone.querySelector('.vp-controls')?.remove();
-  const sourceCanvases = printer.querySelectorAll('canvas');
+  const sourceCanvases = [...printer.querySelectorAll('canvas')].filter(node => !node.closest('.vp-paper-surface'));
   clone.querySelectorAll('canvas').forEach((target, index) => {
     const source = sourceCanvases[index];
     target.width = source.width;
@@ -42,7 +46,7 @@ export async function createPrinterImage(printer) {
         window.style.height = `${window.getBoundingClientRect().height + extraHeight}px`;
       }
     }
-    Object.assign(scroll.style, { maxHeight: 'none', overflow: 'visible' });
+    Object.assign(scroll.style, { maxHeight: 'none', overflow: 'visible', mask: 'none' });
     // Expand fixed-width reports so the PNG includes every column as well.
     const markup = clone.querySelector('.vp-markup-content');
     if (markup) {

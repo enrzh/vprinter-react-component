@@ -149,16 +149,17 @@ function Demo() {
   return <main className="demo">
     <header className="demo-header">
       <div className="demo-brand">
-        <span className="demo-brand-mark" aria-hidden="true">VP</span>
-        <span><strong>Virtual Printer</strong><small>React component</small></span>
+        <span className="demo-brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M6 8V3h12v5M6 17H4V8h16v9h-2M6 14h12v7H6zM16 11h1" /></svg></span>
+        <span><strong>Virtual Printer</strong><small>An interactive paper playground</small></span>
       </div>
       <a className="demo-source" href="https://github.com/enrzh/vprinter-react-component" target="_blank" rel="noreferrer">Source ↗</a>
     </header>
 
     <div className="demo-workspace" data-step={step}>
       <section className="demo-setup" aria-labelledby="setup-title">
-        <div className="demo-overline">Content</div>
-        <h1 id="setup-title">Receipt</h1>
+        <div className="demo-overline">Your next printout</div>
+        <h1 id="setup-title">Make it print.</h1>
+        <p className="demo-intro">Write a receipt. Feed the paper. Give it a tear.</p>
         <fieldset className="demo-mode-grid">
           <legend className="demo-sr-only">Print format</legend>
           {[
@@ -207,6 +208,10 @@ function Demo() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 15V3m-4 4 4-4 4 4M6 10H4v11h16V10h-2" /></svg>
             </button>
           </div>
+        </div>
+        <div className="demo-preview-meta">
+          <span className="demo-phase" data-phase={printerPhase}>{printerPhase === 'printing' ? 'Printing' : printerPhase === 'tearing' ? 'Tearing' : printerPhase === 'printed' ? 'Printed' : 'Ready'}</span>
+          <p>{printerPhase === 'printed' ? `Pull sideways to tear.${scrollable ? ' Scroll to read.' : ''}` : printerPhase === 'printing' ? 'Fresh ink, coming through.' : printerPhase === 'tearing' ? 'Back to a clean sheet.' : 'Choose a style, then press Print.'}</p>
         </div>
         <VirtualPrinter resetKey={previewId} {...printerProps} />
         {shareError && <p role="alert">{shareError}</p>}

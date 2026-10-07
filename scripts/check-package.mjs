@@ -30,7 +30,7 @@ const indexSource = readFileSync(new URL('../lib/index.js', import.meta.url), 'u
 const cjsSource = readFileSync(new URL('../lib/index.cjs', import.meta.url), 'utf8');
 assert.doesNotMatch(indexSource, /WebGLRenderer/);
 assert.doesNotMatch(cjsSource, /WebGLRenderer/);
-const specifier = indexSource.match(/import\(\s*['"](\.\/[^'"]+)['"]\s*\)/)?.[1];
+const specifier = [...indexSource.matchAll(/import\(\s*['"](\.\/[^'"]+)['"]\s*\)/g)].map(match => match[1]).find(path => path.includes('TabletopPrinter'));
 assert.ok(specifier, 'tabletop printer is a separate chunk');
 const chunkUrl = new URL(specifier, new URL('../lib/index.js', import.meta.url));
 const chunkSource = readFileSync(chunkUrl, 'utf8');
@@ -140,8 +140,8 @@ assert.equal(animated.phase(), 'ready');
 await animated.clickPrint();
 assert.equal(animated.phase(), 'printing');
 await act(async () => {
-  animated.host.querySelector('.vp-paper-window').dispatchEvent(new win.AnimationEvent('animationend', {
-    animationName: 'vp-feed-front', bubbles: true,
+  animated.host.querySelector('.vp').dispatchEvent(new win.AnimationEvent('animationend', {
+    animationName: 'vp-motor-feed', bubbles: true,
   }));
 });
 assert.equal(animated.phase(), 'printed');
@@ -154,11 +154,74 @@ await act(async () => { await new Promise(resolve => setTimeout(resolve, 3500));
 assert.equal(timed.phase(), 'printed');
 await act(async () => { timed.root.unmount(); });
 
+let tears = 0;
+const pulling = await mount({ content: 'Attached paper', initiallyPrinted: true, onTear: () => { tears++; } });
+const independent = await mount({ content: 'Another printer', initiallyPrinted: true });
+const sheet = pulling.host.querySelector('.vp-paper-scroll');
+// happy-dom has no native pointer capture; gesture state remains component-owned.
+sheet.setPointerCapture = () => {};
+sheet.hasPointerCapture = () => false;
+const pointer = (type, clientX) => act(async () => {
+  sheet.dispatchEvent(new win.PointerEvent(type, { bubbles: true, pointerId: 1, isPrimary: true, pointerType: 'mouse', clientX, clientY: 80 }));
+});
+await pointer('pointerdown', 100);
+await pointer('pointermove', 128);
+assert.equal(pulling.host.querySelector('.vp').dataset.flexing, 'true');
+await pointer('lostpointercapture', 128);
+await act(async () => {
+  for (let attempt = 0; attempt < 100 && pulling.host.querySelector('.vp').dataset.flexing; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 20));
+  }
+});
+assert.equal(pulling.phase(), 'printed');
+assert.equal(pulling.host.querySelector('.vp').dataset.flexing, undefined);
+assert.equal(tears, 0);
+await pointer('pointerdown', 100);
+await pointer('pointermove', 145);
+await pointer('pointerup', 145);
+assert.equal(pulling.phase(), 'tearing');
+assert.equal(sheet.querySelector('.vp-paper').style.getPropertyValue('--vp-cut-bottom'), '-100vh');
+assert.match(sheet.parentElement.style.getPropertyValue('--vp-tear-time'), /^\d+ms$/);
+await act(async () => {
+  for (let attempt = 0; attempt < 60 && pulling.phase() === 'tearing'; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  sheet.dispatchEvent(new win.AnimationEvent('animationend', { animationName: 'vp-tear', bubbles: true }));
+  sheet.dispatchEvent(new win.AnimationEvent('animationend', { animationName: 'vp-tear', bubbles: true }));
+});
+assert.equal(pulling.phase(), 'ready');
+assert.equal(tears, 1);
+assert.equal(pulling.host.querySelectorAll('[data-paper-bend]').length, 0);
+assert.equal(sheet.parentElement.style.getPropertyValue('--vp-tear-time'), '');
+assert.equal(independent.phase(), 'printed');
+await pulling.clickPrint();
+await act(async () => {
+  pulling.host.querySelector('.vp').dispatchEvent(new win.AnimationEvent('animationend', { animationName: 'vp-motor-feed', bubbles: true }));
+});
+await pointer('pointerdown', 100);
+await pointer('pointermove', 128);
+await act(async () => { pulling.root.render(React.createElement(esm.VirtualPrinter, { content: 'Replacement', resetKey: 1 })); });
+assert.equal(pulling.phase(), 'ready');
+assert.equal(pulling.host.querySelector('.vp').dataset.flexing, undefined);
+assert.equal(pulling.host.querySelectorAll('[data-paper-bend]').length, 0);
+await act(async () => { pulling.root.unmount(); independent.root.unmount(); });
+
 reduceMotion = true;
 const reduced = await mount({ content: 'Skip' });
 await reduced.clickPrint();
 assert.equal(reduced.phase(), 'printed');
+const reducedSheet = reduced.host.querySelector('.vp-paper-scroll');
+reducedSheet.setPointerCapture = () => {};
+await act(async () => {
+  for (const [type, clientX] of [['pointerdown', 100], ['pointermove', 125], ['pointerup', 125]]) {
+    reducedSheet.dispatchEvent(new win.PointerEvent(type, { bubbles: true, pointerId: 2, isPrimary: true, pointerType: 'mouse', clientX, clientY: 80 }));
+  }
+});
+assert.equal(reduced.phase(), 'printed');
+assert.equal(reduced.host.querySelector('.vp').dataset.flexing, undefined);
+await act(async () => { reduced.host.querySelector('.vp-tear').click(); });
+assert.equal(reduced.phase(), 'ready');
 await act(async () => { reduced.root.unmount(); });
 await win.happyDOM.abort();
 
-console.log('package exports: ESM, CommonJS, CSS, and print phases verified');
+console.log('package exports, print/tear phases, pointer cancellation, independent instances, and reduced motion verified');

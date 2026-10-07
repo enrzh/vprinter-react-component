@@ -19,6 +19,22 @@ printer ready for another copy.
 Printing a full-length tabletop receipt scrolls the page to keep the printer
 visible.
 Short pulls snap back; far pulls tear without waiting for release.
+The paper stays attached at the cutter as you pull: its curve follows where you
+grab it, with a small amount of spring and resistance. A tear travels across the
+edge before the loose sheet falls away. The pulled corner peels first, and your
+release speed and grip position shape its fall. The Cut button uses the same motion.
+The tear opens across the cutter before the sheet moves away. A diagonal crease
+folds the released corner, then relaxes into a small ripple during the drop.
+Each print is captured as one bitmap containing the paper, text, logos and codes.
+The same surface feeds, bends and tears, so the text follows the paper exactly.
+It refreshes when the layout changes, retains accessible DOM content, and falls
+back to the complete DOM sheet if browser capture fails.
+Printing feeds the existing text through the slot, bottom first for Front feed
+and top first for Tabletop, with synchronized paper and printer movement. A
+subtle curl catches the light along the free edge as the paper feeds.
+Scroll previews retain a zigzag free edge, and the visible sheet tears at the
+printer outlet without hidden receipt sections jumping into view. Native paper
+scrollbars are hidden so they cannot intercept a sideways pull.
 Long receipts scroll with a mouse wheel or keyboard;
 front-feed paper also supports touch scrolling, while upward-feed paper uses
 touch dragging to tear. These icon buttons have accessible labels.
@@ -27,8 +43,8 @@ including all rows and fixed-width columns. Tabletop images have a solid backgro
 front-feed images are transparent. Supported devices open the native
 share sheet; other browsers download `receipt.png`. External logos must allow
 cross-origin image access to be included in the export.
-Image sharing is exclusive to the demo. Neither the share button nor its
-image-export dependency is included in the installed React component.
+Image sharing is exclusive to the demo. The component lazily loads
+`html-to-image` to prepare its paper bitmap; the share button stays in the demo.
 
 ## Run locally
 
@@ -82,9 +98,9 @@ should remain visible and grow with its content:
 React is a peer dependency, so the app's existing React runtime is reused.
 
 For a source-copy integration, copy `src/VirtualPrinter.jsx`,
-`src/TabletopPrinter.jsx`, `src/tearGesture.js`, `src/VirtualPrinter.css`,
+`src/TabletopPrinter.jsx`, `src/tearGesture.js`, `src/paperSurface.js`, `src/VirtualPrinter.css`,
 `src/receipt.js`, `src/simpleTicket.js`, and `src/printerMarkup.js` into a React
-app and install `jsbarcode`, `three`, and `uqr`.
+app and install `html-to-image`, `jsbarcode`, `three`, and `uqr`.
 The component imports its scoped CSS. The demo files, including `demoImage.js`,
 are not needed to use the component.
 
@@ -138,8 +154,10 @@ accepted too. Unknown tags remain literal text. Adjacent centered blocks
 (`<C>To Go</C><C>029</C>`) become separate lines, matching the printer dialect.
 Pass `logo` as an image URL or React node to replace the default mark used by
 `<LOGO>`. Markup paper is a 48-column slip (`--vp-columns`, set it to `32` for
-58mm). Every markup line keeps its spaces. Rows that are wider than the slip,
-including doubled characters, scroll inside the paper instead of wrapping.
+58mm). Every markup line keeps its spaces. Wide content, including doubled
+characters, automatically reduces the document's font size to fit the paper
+without horizontal scrolling. It refits when the paper width or printer style
+changes. Long receipts can still scroll vertically.
 
 `SUPPORTED_PRINTER_TAGS` is exported when an integration needs to validate a
 payload before displaying it. The component remains a visual preview: `<CUT>`
@@ -168,7 +186,7 @@ drawer, or play audio.
 | `paperMaxHeight` | `60svh` | CSS height (or number of pixels) for scrollable paper |
 | `resetKey` | `undefined` | Change this value to return the printer to an empty ready state |
 | `onPhaseChange` | `undefined` | Called with `ready`, `printing`, `printed`, or `tearing` after a phase change |
-| `onPrintStart` | `undefined` | Called when paper starts feeding |
+| `onPrintStart` | `undefined` | Called when a print job starts |
 | `onPrinted` | `undefined` | Called when paper finishes feeding |
 | `onTear` | `undefined` | Called after a tear-off returns the printer to ready |
 | `className` | `''` | Optional host styling hook |
@@ -208,9 +226,11 @@ remounting the component:
 
 The CSS variables `--vp-ink`, `--vp-muted`, `--vp-paper`, `--vp-columns`, and
 `--vp-feed-duration` can be overridden on the component. The base feed animation
-is 2.8 seconds, and the front printer uses 1.9 seconds. Keep a custom duration
-below the 3.4-second fallback, which marks the paper printed if the animation
-does not finish. A structured receipt with invalid items, tax, or payment data
+is 2.8 seconds, and the front printer uses 1.9 seconds. A custom duration sets
+the minimum for short receipts; receipts over 650 pixels take proportionally
+longer, up to 16 seconds. The fallback follows that measured duration with a
+700-millisecond allowance. Reduced motion skips feeding, spring settling and
+tear-off animations. A structured receipt with invalid items, tax, or payment data
 stays on screen and shows the reason, instead of blanking the surrounding page.
 
 ## Build and deployment
