@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import JsBarcode from 'jsbarcode';
 import { encode } from 'uqr';
 import { calculateTotals, formatOrderDate, moneyFormatter } from './receipt.js';
@@ -123,7 +123,7 @@ function TicketPaper({ ticket }) {
  * Reusable visual printer. Pass one of `receipt`, raw FEIEYUN `content`, or a
  * compact `ticket` object.
  */
-export function VirtualPrinter({
+export const VirtualPrinter = forwardRef(function VirtualPrinter({
   receipt,
   content,
   ticket,
@@ -131,6 +131,7 @@ export function VirtualPrinter({
   initiallyPrinted = false,
   orientation = 'front',
   scrollable = true,
+  controls = true,
   paperMaxHeight,
   resetKey,
   onPhaseChange,
@@ -138,7 +139,7 @@ export function VirtualPrinter({
   onPrinted,
   onTear,
   className = '',
-}) {
+}, ref) {
   const hasContent = content !== undefined && content !== null;
   const hasTicket = ticket !== undefined && ticket !== null;
   const hasReceipt = receipt !== undefined && receipt !== null;
@@ -166,6 +167,9 @@ export function VirtualPrinter({
     id: 0, phase: initiallyPrinted ? 'printed' : 'ready', receipt: hasContent || hasTicket ? null : receipt,
     content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null,
   }));
+  const activePhase = useRef(job.phase);
+  activePhase.current = job.phase;
+  useImperativeHandle(ref, () => ({ print: printReceipt, tear: () => startTear() }));
   const printing = job.phase === 'printing';
   const tearing = job.phase === 'tearing';
   const source = job.phase === 'ready' ? {
@@ -477,7 +481,8 @@ export function VirtualPrinter({
   }
 
   function startTear(motion) {
-    if (job.phase !== 'printed') return;
+    if (activePhase.current !== 'printed') return;
+    activePhase.current = 'tearing';
     const paper = paperScroll.current;
     if (!flex.current) {
       const bounds = paper.getBoundingClientRect();
@@ -591,21 +596,22 @@ export function VirtualPrinter({
   }, [job.id, printing, preparingPaper]);
 
   function printReceipt() {
-    if (printing || tearing) return;
+    if (activePhase.current === 'printing' || activePhase.current === 'tearing') return;
     stopFlex();
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setJob({ id: ++nextId.current, phase: reduceMotion ? 'printed' : 'printing', receipt: hasContent || hasTicket ? null : receipt,
+    activePhase.current = reduceMotion ? 'printed' : 'printing';
+    setJob({ id: ++nextId.current, phase: activePhase.current, receipt: hasContent || hasTicket ? null : receipt,
       content: hasContent ? content : null, ticket: hasTicket && !hasContent ? ticket : null });
   }
 
   const paperStyle = paperMaxHeight == null ? undefined : {
     '--vp-paper-height': typeof paperMaxHeight === 'number' ? `${paperMaxHeight}px` : String(paperMaxHeight),
   };
-  return <section className={`vp vp--${orientation} ${className}`} data-phase={job.phase} data-paper-pending={preparingPaper ? 'true' : 'false'} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label={`${orientation === 'up' ? 'Upward' : 'Front-feed'} virtual receipt printer`}
+  return <section className={`vp vp--${orientation} ${className}`} data-phase={job.phase} data-controls={controls ? 'true' : 'false'} data-paper-pending={preparingPaper ? 'true' : 'false'} data-scrollable={isScrollable ? 'true' : 'false'} style={paperStyle} aria-label={`${orientation === 'up' ? 'Upward' : 'Front-feed'} virtual receipt printer`}
     onAnimationEnd={event => { if (event.animationName === 'vp-motor-feed' && event.target === event.currentTarget) finishPrint(); }}>
     <div className="vp-machine">
       <div className="vp-housing" aria-hidden="true">{Tabletop && <Tabletop phase={job.phase} />}</div>
-      <div className="vp-controls" role="group" aria-label="Printer controls">
+      {controls && <div className="vp-controls" role="group" aria-label="Printer controls">
         <button ref={printButton} className="vp-print" type="button" onClick={printReceipt} disabled={printing || tearing} aria-label={printing ? 'Printing receipt' : 'Print receipt'} title={printing ? 'Printing receipt' : 'Print receipt'} aria-describedby={statusId}>
           <PrinterIcon />
           <span className="vp-sr-only">{printing ? 'Printing receipt' : 'Print receipt'}</span>
@@ -614,7 +620,7 @@ export function VirtualPrinter({
         {(job.phase === 'printed' || tearing) && <button className="vp-tear" type="button" aria-label="Tear off receipt" title="Tear off receipt" disabled={tearing} onClick={startTear}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8 8 12 12M8 16 20 4" /></svg>
         </button>}
-      </div>
+      </div>}
       <div className="vp-status" role="status" aria-live="polite" aria-atomic="true" id={statusId}>
         <span className={`vp-status-icon ${printing ? 'vp-status-icon--printing' : ''}`} aria-hidden="true" title={statusText}>
           {printing ? <span className="vp-spinner" /> : job.phase === 'printed' ?
@@ -701,4 +707,4 @@ export function VirtualPrinter({
       </div>
     </div>
   </section>;
-}
+});

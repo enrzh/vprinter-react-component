@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Virtual Printer — independent host</title>
+    <style>
+      body { margin: 24px; background: #edf1f5; color: #172534; font: 16px/1.5 system-ui; }
+      button, input { font: inherit; }
+      button { padding: 6px 14px; }
+      .host-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 32px; align-items: start; }
+      .host-case { min-width: 0; padding: 16px; border: 1px solid #abb8c5; border-radius: 12px; }
+      .host-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
+      .host-stage { max-width: 100%; }
+      #host-sentinel { padding: 13px; background: #e3d7ef; border: 2px solid #847093; }
+    </style>
+  </head>
+  <body>
+    <h1>Independent host app</h1>
+    <p id="host-sentinel">Host typography, background and controls stay independent.</p>
+    <div id="root"></div>
+    <script type="module" src="/main.jsx"></script>
+  </body>
+</html>

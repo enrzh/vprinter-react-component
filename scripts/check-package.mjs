@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { existsSync, readFileSync } from 'node:fs';
-import React, { act } from 'react';
+import React, { act, createRef } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Window } from 'happy-dom';
 
 const esm = await import('../lib/index.js');
-assert.equal(typeof esm.VirtualPrinter, 'function');
+assert.equal(esm.VirtualPrinter.$$typeof, Symbol.for('react.forward_ref'));
 assert.equal(typeof esm.parsePrinterMarkup, 'function');
 assert.equal(typeof esm.normalizeTicket, 'function');
 assert.ok(esm.SUPPORTED_PRINTER_TAGS.includes('QR'));
@@ -21,10 +21,11 @@ assert.equal(ticketEntry.VirtualPrinter, undefined);
 
 const require = createRequire(import.meta.url);
 const cjs = require('../lib/index.cjs');
-assert.equal(typeof cjs.VirtualPrinter, 'function');
+assert.equal(cjs.VirtualPrinter.$$typeof, Symbol.for('react.forward_ref'));
 assert.equal(typeof require('../lib/markup.cjs').parsePrinterMarkup, 'function');
 assert.equal(typeof require('../lib/ticket.cjs').normalizeTicket, 'function');
 assert.ok(existsSync(new URL('../lib/vprinter-react-component.css', import.meta.url)));
+assert.ok(existsSync(new URL('../src/styles.d.ts', import.meta.url)));
 
 const indexSource = readFileSync(new URL('../lib/index.js', import.meta.url), 'utf8');
 const cjsSource = readFileSync(new URL('../lib/index.cjs', import.meta.url), 'utf8');
@@ -44,6 +45,7 @@ assert.match(readFileSync(new URL('../src/VirtualPrinter.css', import.meta.url),
 assert.match(css, /--vp-feed-duration:1\.9s/);
 assert.match(css, /white-space:\s*pre/);
 assert.doesNotMatch(css, /vp-markup-line--dense/);
+assert.doesNotMatch(indexSource, /demo-share|demo-header|demo-style-switch|createPrinterImage/);
 
 const markup = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
   content: '<B>Smoke test</B>',
@@ -91,10 +93,11 @@ const unkeyed = renderToStaticMarkup(React.createElement(esm.VirtualPrinter, {
 assert.match(unkeyed, /1x Soup/);
 assert.match(unkeyed, /2x Bread/);
 
-assert.throws(() => esm.VirtualPrinter({}), /exactly one/);
-assert.throws(() => esm.VirtualPrinter({ content: 'x', ticket: {} }), /exactly one/);
-assert.throws(() => esm.VirtualPrinter({ content: 42 }), /content must be a string/);
-assert.throws(() => esm.VirtualPrinter({ receipt: 'x' }), /receipt must be an object/);
+const render = props => renderToStaticMarkup(React.createElement(esm.VirtualPrinter, props));
+assert.throws(() => render({}), /exactly one/);
+assert.throws(() => render({ content: 'x', ticket: {} }), /exactly one/);
+assert.throws(() => render({ content: 42 }), /content must be a string/);
+assert.throws(() => render({ receipt: 'x' }), /receipt must be an object/);
 
 const win = new Window({ url: 'http://localhost/' });
 globalThis.window = win;
@@ -124,6 +127,48 @@ win.matchMedia = query => ({
 globalThis.matchMedia = win.matchMedia;
 
 const { createRoot } = await import('react-dom/client');
+
+// Exercise the public ref against the built package with no internal buttons.
+let externalPrints = 0, externalTears = 0;
+const externalRef = createRef();
+const external = await mount({ content: 'Original', ref: externalRef, controls: false,
+  onPrinted: () => { externalPrints++; }, onTear: () => { externalTears++; } });
+const sibling = await mount({ ticket: { title: 'Independent' }, initiallyPrinted: true });
+assert.equal(external.host.querySelector('.vp-controls'), null);
+assert.equal(typeof externalRef.current.print, 'function');
+assert.equal(typeof externalRef.current.tear, 'function');
+await act(async () => { externalRef.current.tear(); });
+assert.equal(external.phase(), 'ready');
+await act(async () => { externalRef.current.print(); externalRef.current.print(); externalRef.current.tear(); });
+assert.equal(external.phase(), 'printing');
+await act(async () => { external.root.render(React.createElement(esm.VirtualPrinter, {
+  content: 'Updated', ref: externalRef, controls: false,
+  onPrinted: () => { externalPrints++; }, onTear: () => { externalTears++; },
+})); });
+assert.match(external.host.textContent, /Original/);
+assert.doesNotMatch(external.host.textContent, /Updated/);
+await act(async () => {
+  external.host.querySelector('.vp').dispatchEvent(new win.AnimationEvent('animationend', {
+    animationName: 'vp-motor-feed', bubbles: true,
+  }));
+});
+assert.equal(external.phase(), 'printed');
+assert.equal(externalPrints, 1);
+await act(async () => { externalRef.current.tear(); externalRef.current.tear(); externalRef.current.print(); });
+assert.equal(external.phase(), 'tearing');
+assert.equal(sibling.phase(), 'printed');
+await act(async () => {
+  for (let attempt = 0; attempt < 60 && external.phase() === 'tearing'; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+});
+assert.equal(external.phase(), 'ready');
+assert.equal(externalTears, 1);
+await act(async () => { externalRef.current.print(); });
+assert.match(external.host.textContent, /Updated/);
+assert.equal(sibling.phase(), 'printed');
+await act(async () => { external.root.unmount(); sibling.root.unmount(); });
+assert.equal(externalRef.current, null);
 
 async function mount(props) {
   const host = document.createElement('div');
@@ -224,4 +269,4 @@ assert.equal(reduced.phase(), 'ready');
 await act(async () => { reduced.root.unmount(); });
 await win.happyDOM.abort();
 
-console.log('package exports, print/tear phases, pointer cancellation, independent instances, and reduced motion verified');
+console.log('package exports, external controls, input snapshots, print/tear phases, pointer cancellation, independent instances, and reduced motion verified');

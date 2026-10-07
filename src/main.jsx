@@ -68,6 +68,7 @@ function Demo() {
   const [orientation, setOrientation] = useState('front');
   const scrollable = scrollableByStyle[orientation];
   const preview = useRef(null);
+  const printer = useRef(null);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState('');
   const [exampleId, setExampleId] = useState('real-world-daily');
@@ -198,10 +199,10 @@ function Demo() {
           </fieldset>
           <div className="demo-header-actions">
             {orientation === 'up' && <button type="button" className="demo-header-print" aria-label="Print receipt" title="Print receipt" disabled={printerPhase === 'printing' || printerPhase === 'tearing'} onClick={() => {
-              preview.current?.querySelector('.vp-print')?.click();
+              printer.current?.print();
               if (!scrollable) followTabletopPrinter();
             }}>Print</button>}
-            {orientation === 'up' && (printerPhase === 'printed' || printerPhase === 'tearing') && <button type="button" className="demo-header-cut" aria-label="Tear off receipt" title="Tear off receipt" disabled={printerPhase === 'tearing'} onClick={() => preview.current?.querySelector('.vp-tear')?.click()}>
+            {orientation === 'up' && (printerPhase === 'printed' || printerPhase === 'tearing') && <button type="button" className="demo-header-cut" aria-label="Tear off receipt" title="Tear off receipt" disabled={printerPhase === 'tearing'} onClick={() => printer.current?.tear()}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="m8 8 12 12M8 16 20 4" /></svg>
             </button>}
             <button type="button" className="demo-share" aria-label={sharing ? 'Preparing image' : 'Share receipt image'} title="Share receipt image" disabled={sharing} onClick={shareReceipt}>
@@ -213,7 +214,7 @@ function Demo() {
           <span className="demo-phase" data-phase={printerPhase}>{printerPhase === 'printing' ? 'Printing' : printerPhase === 'tearing' ? 'Tearing' : printerPhase === 'printed' ? 'Printed' : 'Ready'}</span>
           <p>{printerPhase === 'printed' ? `Pull sideways to tear.${scrollable ? ' Scroll to read.' : ''}` : printerPhase === 'printing' ? 'Fresh ink, coming through.' : printerPhase === 'tearing' ? 'Back to a clean sheet.' : 'Choose a style, then press Print.'}</p>
         </div>
-        <VirtualPrinter resetKey={previewId} {...printerProps} />
+        <VirtualPrinter ref={printer} controls={orientation !== 'up'} resetKey={previewId} {...printerProps} />
         {shareError && <p role="alert">{shareError}</p>}
       </section>
     </div>

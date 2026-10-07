@@ -1,7 +1,7 @@
 {
   "name": "vprinter-react-component",
   "version": "1.0.0",
-  "description": "A reusable React virtual printer with FEIEYUN markup and quick ticket inputs.",
+  "description": "An interactive React receipt printer with front-feed and tabletop styles, paper animation, drag-to-tear, and optional scrolling.",
   "repository": "github:enrzh/vprinter-react-component",
   "homepage": "https://enrzh.github.io/vprinter-react-component/",
   "type": "module",
@@ -15,6 +15,7 @@
     "lib",
     "src/index.js",
     "src/index.d.ts",
+    "src/styles.d.ts",
     "src/markup.js",
     "src/markup.d.ts",
     "src/ticket.js",
@@ -37,7 +38,10 @@
       "require": "./lib/index.cjs",
       "default": "./lib/index.js"
     },
-    "./styles.css": "./lib/vprinter-react-component.css",
+    "./styles.css": {
+      "types": "./src/styles.d.ts",
+      "default": "./lib/vprinter-react-component.css"
+    },
     "./markup": {
       "types": "./src/markup.d.ts",
       "import": "./lib/markup.js",

@@ -1,7 +1,13 @@
 # React Virtual Printer
 
-A small React receipt printer. It renders only the printer; it does not set a
-page background or add a card around itself.
+An interactive React receipt printer with front-feed and tabletop styles.
+Paper feeds through the outlet, bends under your hand and tears sideways, with
+the printed text moving on the same paper surface. Long receipts can scroll or
+grow to their full length.
+
+The reusable component owns the printer, paper and interaction logic. The demo
+owns its forms, header, style picker, image sharing and page layout. Component
+styles use the `vp` namespace; they do not style the host's body, forms or buttons.
 
 **[Open the demo](https://enrzh.github.io/vprinter-react-component/)**
 
@@ -79,8 +85,16 @@ drop into your own layout:
 import { VirtualPrinter } from 'vprinter-react-component';
 import 'vprinter-react-component/styles.css';
 
-<VirtualPrinter content={`<C><BOLD>Order #029</BOLD></C>\n1 x Burger       9.99\n<B>Total          9.99</B>`} initiallyPrinted />
+<VirtualPrinter
+  content={`<C><B>Order #029</B></C>\n1 x Burger       9.99\n<B>Total          9.99</B>`}
+  orientation="front"
+/>
 ```
+
+Built-in Print/Tear buttons and paper gestures work immediately. Use
+`orientation="up"` for the tabletop printer. Scrolling defaults to `true`;
+set `scrollable={false}` for a full-length printout. No provider, demo stylesheet
+or page wrapper is required. React 18 and newer are supported.
 
 The package ships prebuilt ESM and CommonJS in `lib/`. Installing from GitHub
 does not run a build. `vprinter-react-component/markup` and
@@ -96,6 +110,45 @@ should remain visible and grow with its content:
 ```
 
 React is a peer dependency, so the app's existing React runtime is reused.
+
+### External Print/Tear buttons
+
+A component ref exposes `print()` and `tear()`. They use the same animation and
+interaction logic as the built-in buttons. `controls={false}` removes those
+buttons when your app supplies its own; omit it to keep both available.
+
+```jsx
+import { useRef, useState } from 'react';
+import { VirtualPrinter } from 'vprinter-react-component';
+import 'vprinter-react-component/styles.css';
+
+export function ReceiptPreview({ content }) {
+  const printer = useRef(null);
+  const [phase, setPhase] = useState('ready');
+  const busy = phase === 'printing' || phase === 'tearing';
+
+  return <>
+    <button disabled={busy} onClick={() => printer.current?.print()}>Print</button>
+    <button disabled={phase !== 'printed'} onClick={() => printer.current?.tear()}>Tear</button>
+    <VirtualPrinter
+      ref={printer}
+      content={content}
+      orientation="up"
+      scrollable
+      controls={false}
+      onPhaseChange={setPhase}
+    />
+  </>;
+}
+```
+
+For TypeScript, import `type VirtualPrinterHandle` from the same package and
+use `useRef<VirtualPrinterHandle>(null)`. Each ref controls only its own printer.
+Print calls while busy are ignored; Tear calls only act on a completed print.
+`onPhaseChange` reports transitions rather than the initial state, so initialize
+your host state to `printed` when using `initiallyPrinted`.
+External buttons own their keyboard focus; use `onTear` if your app wants to
+return focus to its Print button.
 
 For a source-copy integration, copy `src/VirtualPrinter.jsx`,
 `src/TabletopPrinter.jsx`, `src/tearGesture.js`, `src/paperSurface.js`, `src/VirtualPrinter.css`,
@@ -182,6 +235,7 @@ drawer, or play audio.
 | `logo` | Default mark | Image URL or React node for `<LOGO>` |
 | `initiallyPrinted` | `false` | Show a completed receipt on mount |
 | `scrollable` | `true` | Constrain long paper to a scrollable area, or show the full receipt |
+| `controls` | `true` | Show built-in Print/Tear buttons; set `false` for host-only controls |
 | `orientation` | `'front'` | Use `'up'` for the Three.js tabletop printer modeled after the N80 silhouette |
 | `paperMaxHeight` | `60svh` | CSS height (or number of pixels) for scrollable paper |
 | `resetKey` | `undefined` | Change this value to return the printer to an empty ready state |
@@ -194,6 +248,15 @@ drawer, or play audio.
 Multiple instances are independent. Treat receipt data as immutable. Updated
 props are captured on the next print, leaving an existing receipt intact. Use
 exactly one of `receipt`, `content`, or `ticket` per instance.
+
+Resize the component's container to change its width. Bitmap paper and markup
+font fitting update with it. Keyboard users can operate built-in or host buttons
+and use Arrow keys, Page Up/Down, Home and End in the paper region. Reduced
+motion skips print/tear animation. The component never scrolls the host page;
+the demo's page-following behavior for full-length tabletop prints is separate.
+The tabletop model requires WebGL. If bitmap capture fails, paper remains
+readable as DOM content, with simpler tear visuals. External logos must permit
+cross-origin image access to participate in bitmap animation.
 
 `cafeReceipt` documents the complete data shape. Item IDs must be unique;
 quantities are positive integers, amounts are nonnegative integers in the
@@ -234,6 +297,23 @@ tear-off animations. A structured receipt with invalid items, tax, or payment da
 stays on screen and shows the reason, instead of blanking the surrounding page.
 
 ## Build and deployment
+
+### Check the installed package in another app
+
+`examples/host` is a small independent host with both styles, long receipts,
+all three input APIs, resize/scroll switches, external buttons and four separate
+instances. It imports the installed package and its CSS, never the demo source.
+To verify the exact files that ship, first run `pnpm test:package`, then
+`pnpm pack --pack-destination /tmp`. Copy `examples/host` to a temporary folder
+and run there:
+
+```sh
+npm install /tmp/vprinter-react-component-1.0.0.tgz
+npm run dev -- --port 5181
+npm run build
+```
+
+This host fixture is excluded from the published package.
 
 [GitHub Actions](https://github.com/enrzh/vprinter-react-component/actions/workflows/pages.yml)
 installs the locked dependencies, runs the tests and builds the demo. Pull requests

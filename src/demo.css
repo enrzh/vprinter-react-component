@@ -90,7 +90,6 @@ button { cursor: pointer; }
 .demo-header-cut svg { width: 20px; height: 20px; }
 .demo-header-cut:focus-visible { outline: 2px solid #007aff; outline-offset: 3px; }
 .demo-header-cut:disabled { opacity: .5; cursor: wait; }
-.demo-preview .vp--up .vp-controls { display: none; }
 .demo-share { display: grid; visibility: hidden; width: 44px; height: 44px; place-items: center; border: 1px solid #d9ddd3; border-radius: 11px; background: #fcfcf8; color: #26342d; pointer-events: none; }
 .demo-header-cut:hover:not(:disabled), .demo-share:hover:not(:disabled) { background: #e8ecdf; }
 .demo-preview:has(.vp[data-phase="printed"]) .demo-share { visibility: visible; pointer-events: auto; }

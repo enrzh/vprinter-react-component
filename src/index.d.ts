@@ -1,4 +1,4 @@
-import type { ReactNode, ReactElement } from 'react';
+import type { ReactNode, ForwardRefExoticComponent, RefAttributes } from 'react';
 
 export type PrinterPhase = 'ready' | 'printing' | 'printed' | 'tearing';
 
@@ -67,6 +67,7 @@ export interface VirtualPrinterProps {
   initiallyPrinted?: boolean;
   orientation?: 'front' | 'up';
   scrollable?: boolean;
+  controls?: boolean;
   paperMaxHeight?: string | number;
   resetKey?: string | number;
   className?: string;
@@ -76,7 +77,12 @@ export interface VirtualPrinterProps {
   onTear?: () => void;
 }
 
-export declare function VirtualPrinter(props: VirtualPrinterProps): ReactElement;
+export interface VirtualPrinterHandle {
+  print(): void;
+  tear(): void;
+}
+
+export declare const VirtualPrinter: ForwardRefExoticComponent<VirtualPrinterProps & RefAttributes<VirtualPrinterHandle>>;
 export declare const cafeReceipt: ReceiptData;
 export declare const quickTicketExample: TicketData;
 export declare const printerInputExamples: Record<string, string>;
